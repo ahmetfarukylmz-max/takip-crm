@@ -96,6 +96,7 @@
         const TrashIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>);
         const LogoutIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>);
         const ArrowLeftIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>);
+        const ExclamationCircleIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>);
 
 
         // --- Form Bileşenleri ---
@@ -166,7 +167,7 @@
                         await auth.signInWithEmailAndPassword(email, password);
                     }
                 } catch (err) {
-                    setError('Bir hata oluştu. Lütfen bilgilerinizi kontrol edin.');
+                    setError('Kullanıcı adı veya şifre hatalı. Lütfen bilgilerinizi kontrol edin.');
                     console.error(err);
                 }
             };
@@ -180,7 +181,12 @@
                         <form onSubmit={handleAuthAction} className="space-y-6">
                             <FormInput label="E-posta Adresi" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
                             <FormInput label="Şifre" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
-                            {error && <p className="text-sm text-red-500">{error}</p>}
+                            {error && (
+                                <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded-md flex items-center">
+                                    <ExclamationCircleIcon className="w-5 h-5 mr-2"/>
+                                    <span className="text-sm font-medium">{error}</span>
+                                </div>
+                            )}
                             <button type="submit" className="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 {isRegistering ? 'Kayıt Ol' : 'Giriş Yap'}
                             </button>
