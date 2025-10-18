@@ -95,6 +95,7 @@
         const PlusIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>);
         const TrashIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>);
         const LogoutIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>);
+        const ArrowLeftIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>);
 
 
         // --- Form Bileşenleri ---
@@ -246,13 +247,167 @@
                 </div>
             );
         };
-
-        const Musteriler = ({ customers, onSave }) => {
+        
+        const CustomerDetail = ({ customer, onBack, onSave, orders, teklifler, gorusmeler, shipments }) => {
             const [isModalOpen, setIsModalOpen] = useState(false);
-            const [currentCustomer, setCurrentCustomer] = useState(null);
-            const handleOpenModal = (customer = null) => { setCurrentCustomer(customer); setIsModalOpen(true); };
-            const handleSave = (customerData) => { onSave(customerData); setIsModalOpen(false); };
-            return (<div><div className="flex justify-between items-center mb-6"><h1 className="text-3xl font-bold text-gray-800">Müşteri Yönetimi</h1><button onClick={() => handleOpenModal()} className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"><PlusIcon/>Yeni Müşteri</button></div><div className="overflow-auto rounded-lg shadow bg-white"><table className="w-full"><thead className="bg-gray-50 border-b-2 border-gray-200"><tr>{['Müşteri Adı', 'Yetkili Kişi', 'Telefon', 'E-posta', 'İşlemler'].map(head => <th key={head} className="p-3 text-sm font-semibold tracking-wide text-left">{head}</th>)}</tr></thead><tbody className="divide-y divide-gray-100">{customers.map(customer => (<tr key={customer.id} className="hover:bg-gray-50"><td className="p-3 text-sm text-gray-700 font-bold">{customer.name}</td><td className="p-3 text-sm text-gray-700">{customer.contact_person}</td><td className="p-3 text-sm text-gray-700">{customer.phone}</td><td className="p-3 text-sm text-gray-700">{customer.email}</td><td className="p-3 text-sm text-gray-700"><button onClick={() => handleOpenModal(customer)} className="text-blue-500 hover:underline">Düzenle</button></td></tr>))}</tbody></table></div><Modal show={isModalOpen} onClose={() => setIsModalOpen(false)} title={currentCustomer ? 'Müşteri Düzenle' : 'Yeni Müşteri Ekle'}><CustomerForm customer={currentCustomer} onSave={handleSave} onCancel={() => setIsModalOpen(false)} /></Modal></div>);
+
+            const customerOrders = orders.filter(o => o.customerId === customer.id);
+            const customerTeklifler = teklifler.filter(t => t.customerId === customer.id);
+            const customerGorusmeler = gorusmeler.filter(g => g.customerId === customer.id);
+            const customerOrderIds = customerOrders.map(o => o.id);
+            const customerShipments = shipments.filter(s => customerOrderIds.includes(s.orderId));
+
+            const handleSave = (customerData) => {
+                onSave(customerData);
+                setIsModalOpen(false);
+            };
+            
+            const HistorySection = ({ title, data, columns, renderRow }) => (
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                    <h3 className="text-xl font-semibold text-gray-800 mb-4">{title}</h3>
+                    {data.length > 0 ? (
+                         <div className="overflow-auto rounded-lg border">
+                            <table className="w-full">
+                                <thead className="bg-gray-50">
+                                    <tr>{columns.map(col => <th key={col} className="p-3 text-sm font-semibold tracking-wide text-left">{col}</th>)}</tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {data.map(renderRow)}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : <p className="text-gray-500">Bu müşteri için kayıt bulunmuyor.</p>}
+                </div>
+            );
+
+            return (
+                 <div>
+                    <button onClick={onBack} className="flex items-center gap-2 text-sm text-blue-600 hover:underline mb-4">
+                        <ArrowLeftIcon className="w-4 h-4" /> Müşteri Listesine Geri Dön
+                    </button>
+                    <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h1 className="text-3xl font-bold text-gray-800">{customer.name}</h1>
+                                <p className="text-gray-600">{customer.contact_person}</p>
+                            </div>
+                            <button onClick={() => setIsModalOpen(true)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 text-sm">Düzenle</button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
+                            <p><strong className="font-semibold">Telefon:</strong> {customer.phone || 'N/A'}</p>
+                            <p><strong className="font-semibold">E-posta:</strong> {customer.email || 'N/A'}</p>
+                            <p className="col-span-2"><strong className="font-semibold">Adres:</strong> {customer.address || 'N/A'}</p>
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-8">
+                        <HistorySection 
+                            title="Görüşme Geçmişi"
+                            data={customerGorusmeler}
+                            columns={['Tarih', 'Sonuç', 'Sonraki Eylem', 'Eylem Tarihi']}
+                            renderRow={(item) => (
+                                <tr key={item.id} className="hover:bg-gray-50 text-sm"><td className="p-3">{formatDate(item.date)}</td><td className="p-3"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(item.outcome)}`}>{item.outcome}</span></td><td className="p-3">{item.next_action_notes}</td><td className="p-3">{formatDate(item.next_action_date)}</td></tr>
+                            )}
+                        />
+                         <HistorySection 
+                            title="Teklif Geçmişi"
+                            data={customerTeklifler}
+                            columns={['Teklif Tarihi', 'Geçerlilik Tarihi', 'Tutar', 'Durum']}
+                            renderRow={(item) => (
+                                <tr key={item.id} className="hover:bg-gray-50 text-sm"><td className="p-3">{formatDate(item.teklif_tarihi)}</td><td className="p-3">{formatDate(item.gecerlilik_tarihi)}</td><td className="p-3">{formatCurrency(item.total_amount)}</td><td className="p-3"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(item.status)}`}>{item.status}</span></td></tr>
+                            )}
+                        />
+                         <HistorySection 
+                            title="Sipariş Geçmişi"
+                            data={customerOrders}
+                            columns={['Sipariş Tarihi', 'Tutar', 'Durum']}
+                            renderRow={(item) => (
+                                <tr key={item.id} className="hover:bg-gray-50 text-sm"><td className="p-3">{formatDate(item.order_date)}</td><td className="p-3">{formatCurrency(item.total_amount)}</td><td className="p-3"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(item.status)}`}>{item.status}</span></td></tr>
+                            )}
+                        />
+                        <HistorySection 
+                            title="Sevkiyat Geçmişi"
+                            data={customerShipments}
+                            columns={['Sipariş ID', 'Sevk Tarihi', 'Teslim Tarihi', 'Durum']}
+                            renderRow={(item) => (
+                                <tr key={item.id} className="hover:bg-gray-50 text-sm"><td className="p-3">#{item.orderId}</td><td className="p-3">{formatDate(item.shipment_date)}</td><td className="p-3">{formatDate(item.delivery_date)}</td><td className="p-3"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(item.status)}`}>{item.status}</span></td></tr>
+                            )}
+                        />
+                    </div>
+
+                    <Modal show={isModalOpen} onClose={() => setIsModalOpen(false)} title="Müşteri Bilgilerini Düzenle">
+                        <CustomerForm customer={customer} onSave={handleSave} onCancel={() => setIsModalOpen(false)} />
+                    </Modal>
+                </div>
+            );
+        };
+
+        const Musteriler = ({ customers, onSave, orders, teklifler, gorusmeler, shipments }) => {
+            const [isListModalOpen, setIsListModalOpen] = useState(false);
+            const [selectedCustomer, setSelectedCustomer] = useState(null);
+
+            const handleOpenModal = (customer = null) => { 
+                setSelectedCustomer(customer); 
+                setIsListModalOpen(true); 
+            };
+            const handleSave = (customerData) => { 
+                onSave(customerData); 
+                setIsListModalOpen(false); 
+            };
+            
+            if (selectedCustomer && !isListModalOpen) {
+                return <CustomerDetail 
+                    customer={selectedCustomer} 
+                    onBack={() => setSelectedCustomer(null)}
+                    onSave={onSave}
+                    orders={orders}
+                    teklifler={teklifler}
+                    gorusmeler={gorusmeler}
+                    shipments={shipments}
+                />
+            }
+
+            return (
+                <div>
+                    <div className="flex justify-between items-center mb-6">
+                        <h1 className="text-3xl font-bold text-gray-800">Müşteri Yönetimi</h1>
+                        <button onClick={() => handleOpenModal()} className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                            <PlusIcon/>Yeni Müşteri
+                        </button>
+                    </div>
+                    <div className="overflow-auto rounded-lg shadow bg-white">
+                        <table className="w-full">
+                            <thead className="bg-gray-50 border-b-2 border-gray-200">
+                                <tr>
+                                    {['Müşteri Adı', 'Yetkili Kişi', 'Telefon', 'E-posta', 'İşlemler'].map(head => 
+                                        <th key={head} className="p-3 text-sm font-semibold tracking-wide text-left">{head}</th>
+                                    )}
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {customers.map(customer => (
+                                    <tr key={customer.id} className="hover:bg-gray-50">
+                                        <td className="p-3 text-sm text-gray-700 font-bold">
+                                            <a href="#" onClick={(e) => { e.preventDefault(); setSelectedCustomer(customer); }} className="text-blue-600 hover:underline">
+                                                {customer.name}
+                                            </a>
+                                        </td>
+                                        <td className="p-3 text-sm text-gray-700">{customer.contact_person}</td>
+                                        <td className="p-3 text-sm text-gray-700">{customer.phone}</td>
+                                        <td className="p-3 text-sm text-gray-700">{customer.email}</td>
+                                        <td className="p-3 text-sm text-gray-700">
+                                            <button onClick={() => handleOpenModal(customer)} className="text-blue-500 hover:underline">Düzenle</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <Modal show={isListModalOpen} onClose={() => setIsListModalOpen(false)} title={selectedCustomer && selectedCustomer.id ? 'Müşteri Düzenle' : 'Yeni Müşteri Ekle'}>
+                        <CustomerForm customer={selectedCustomer} onSave={handleSave} onCancel={() => setIsListModalOpen(false)} />
+                    </Modal>
+                </div>
+            );
         };
 
         const Urunler = ({ products, onSave }) => {
@@ -676,7 +831,7 @@
             const renderPage = () => {
                 switch (activePage) {
                     case 'Anasayfa': return <Anasayfa customers={customers} orders={orders} shipments={shipments} teklifler={teklifler} gorusmeler={gorusmeler} />;
-                    case 'Müşteriler': return <Musteriler customers={customers} onSave={handleGenericSave('customers')} />;
+                    case 'Müşteriler': return <Musteriler customers={customers} onSave={handleGenericSave('customers')} orders={orders} teklifler={teklifler} gorusmeler={gorusmeler} shipments={shipments} />;
                     case 'Ürünler': return <Urunler products={products} onSave={handleGenericSave('products')} />;
                     case 'Teklifler': return <Teklifler teklifler={teklifler} onSave={handleTeklifSave} onConvertToOrder={handleConvertToOrder} customers={customers} products={products} />;
                     case 'Siparişler': return <Siparisler orders={orders} onSave={handleOrderSave} customers={customers} products={products} />;
