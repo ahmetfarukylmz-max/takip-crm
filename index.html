@@ -499,7 +499,7 @@
         };
 
         const SevkiyatForm = ({ order, onSave, onCancel }) => {
-            const [formData, setFormData] = useState({ transporter: '', tracking_number: '' });
+            const [formData, setFormData] = useState({ transporter: '' });
             const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
             const handleSubmit = (e) => {
                 e.preventDefault();
@@ -513,7 +513,6 @@
                         <p className="font-semibold text-gray-800">{order.customerName}</p>
                     </div>
                     <FormInput label="Nakliye Firması" name="transporter" value={formData.transporter} onChange={handleChange} required />
-                    <FormInput label="Takip Numarası" name="tracking_number" value={formData.tracking_number} onChange={handleChange} />
                     <div className="flex justify-end gap-3 pt-4 border-t">
                         <button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">İptal</button>
                         <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Sevkiyatı Oluştur</button>
@@ -878,10 +877,13 @@
             
             const handleCreateShipment = async (shipmentData) => {
               if (!user) return;
+              
+              const trackingNumber = `AKC-${Date.now()}`;
+
               const newShipment = {
                 orderId: shipmentData.orderId,
                 transporter: shipmentData.transporter,
-                tracking_number: shipmentData.tracking_number,
+                tracking_number: trackingNumber,
                 shipment_date: new Date().toISOString().slice(0, 10),
                 status: 'Yolda', 
                 delivery_date: null,
@@ -922,7 +924,7 @@
                 const orderRef = db.collection(`users/${shipmentOwnerId}/orders`).doc(shipment.orderId);
                 await orderRef.update({ status: 'Tamamlandı' });
             };
-
+            
             const handlePrintTeklif = (teklif) => {
                 const customer = customers.find(c => c.id === teklif.customerId);
                 if (!customer) {
