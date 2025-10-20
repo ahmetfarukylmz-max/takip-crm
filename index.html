@@ -425,7 +425,7 @@
             );
         };
 
-        const Urunler = ({ products, onSave, isAdmin }) => {
+        const Urunler = ({ products, onSave, isAdmin, allUsers }) => {
             const [isModalOpen, setIsModalOpen] = useState(false); 
             const [currentProduct, setCurrentProduct] = useState(null); 
             const handleOpenModal = (product = null) => { setCurrentProduct(product); setIsModalOpen(true); }; 
@@ -452,13 +452,12 @@
                 ); 
             };
             
-            const adminColumns = isAdmin ? ['Kullanıcı ID'] : [];
-            const columns = ['Ürün Adı', 'Ürün Kodu', 'Maliyet Fiyatı', 'Satış Fiyatı', ...adminColumns, 'İşlemler'];
+            const columns = ['Ürün Adı', 'Ürün Kodu', 'Maliyet Fiyatı', 'Satış Fiyatı', 'Ekleyen Kullanıcı', 'İşlemler'];
             
             return (
                 <div>
                     <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-3xl font-bold text-gray-800">Ürün Yönetimi</h1>
+                        <h1 className="text-3xl font-bold text-gray-800">Ortak Ürün Kataloğu</h1>
                         <button onClick={() => handleOpenModal()} className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"><PlusIcon/>Yeni Ürün</button>
                     </div>
                     <div className="overflow-auto rounded-lg shadow bg-white">
@@ -473,7 +472,7 @@
                                         <td className="p-3 text-sm text-gray-700">{product.code}</td>
                                         <td className="p-3 text-sm text-gray-700">{formatCurrency(product.cost_price)}</td>
                                         <td className="p-3 text-sm text-gray-700">{formatCurrency(product.selling_price)}</td>
-                                        {isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '100px'}} title={product.userId}>{product.userId}</td>}
+                                        <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '150px'}} title={allUsers.find(u => u.uid === product.createdBy)?.email}>{allUsers.find(u => u.uid === product.createdBy)?.email || product.createdBy}</td>
                                         <td className="p-3 text-sm text-gray-700"><button onClick={() => handleOpenModal(product)} className="text-blue-500 hover:underline">Düzenle</button></td>
                                     </tr>
                                 ))}
@@ -518,7 +517,7 @@
             );
         };
 
-        const Siparisler = ({ orders, onSave, customers, products, onShipmentCreate, isAdmin }) => {
+        const Siparisler = ({ orders, onSave, customers, products, onShipmentCreate, isAdmin, allUsers }) => {
             const [isModalOpen, setIsModalOpen] = useState(false); 
             const [currentOrder, setCurrentOrder] = useState(null); 
             const [isShipmentModalOpen, setIsShipmentModalOpen] = useState(false);
@@ -563,7 +562,7 @@
                     <div className="flex justify-end gap-3 pt-4 border-t"><button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">İptal</button><button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Siparişi Kaydet</button></div></form>); 
             };
             
-            const adminColumns = isAdmin ? ['Kullanıcı ID'] : [];
+            const adminColumns = isAdmin ? ['Kullanıcı'] : [];
             const columns = ['Müşteri', 'Sipariş Tarihi', 'Toplam Tutar', 'Durum', ...adminColumns, 'İşlemler'];
 
             return (
@@ -579,7 +578,7 @@
                                         <td className="p-3 text-sm text-gray-700">{formatDate(order.order_date)}</td>
                                         <td className="p-3 text-sm text-gray-700">{formatCurrency(order.total_amount)}</td>
                                         <td className="p-3 text-sm"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(order.status)}`}>{order.status}</span></td>
-                                        {isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '100px'}} title={order.userId}>{order.userId}</td>}
+                                        {isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '150px'}} title={allUsers.find(u => u.uid === order.userId)?.email}>{allUsers.find(u => u.uid === order.userId)?.email || order.userId}</td>}
                                         <td className="p-3 text-sm space-x-3">
                                             <button onClick={() => handleOpenModal(order)} className="text-blue-500 hover:underline">Detay</button>
                                             {['Bekliyor', 'Hazırlanıyor'].includes(order.status) && (
@@ -601,7 +600,7 @@
             );
         };
 
-        const Teklifler = ({ teklifler, onSave, onConvertToOrder, customers, products, isAdmin }) => {
+        const Teklifler = ({ teklifler, onSave, onConvertToOrder, customers, products, isAdmin, allUsers }) => {
             const [isModalOpen, setIsModalOpen] = useState(false); const [currentTeklif, setCurrentTeklif] = useState(null); const handleOpenModal = (teklif = null) => { setCurrentTeklif(teklif); setIsModalOpen(true); };
             const handleSave = (teklifData) => { onSave(teklifData); setIsModalOpen(false); };
             const TeklifForm = ({ teklif, onSave, onCancel }) => { 
@@ -641,19 +640,19 @@
                 ); 
             };
             
-            const adminColumns = isAdmin ? ['Kullanıcı ID'] : [];
+            const adminColumns = isAdmin ? ['Kullanıcı'] : [];
             const columns = ['Müşteri', 'Teklif Tarihi', 'Geçerlilik Tarihi', 'Tutar', 'Durum', ...adminColumns, 'İşlemler'];
             
-            return (<div><div className="flex justify-between items-center mb-6"><h1 className="text-3xl font-bold text-gray-800">Teklif Yönetimi</h1><button onClick={() => handleOpenModal()} className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"><PlusIcon/>Yeni Teklif</button></div><div className="overflow-auto rounded-lg shadow bg-white"><table className="w-full"><thead className="bg-gray-50 border-b-2 border-gray-200"><tr>{columns.map(h => <th key={h} className="p-3 text-sm font-semibold tracking-wide text-left">{h}</th>)}</tr></thead><tbody className="divide-y divide-gray-100">{teklifler.map(teklif => (<tr key={teklif.id} className="hover:bg-gray-50"><td className="p-3 text-sm text-gray-700 font-bold">{customers.find(c => c.id === teklif.customerId)?.name || 'Bilinmiyor'}</td><td className="p-3 text-sm text-gray-700">{formatDate(teklif.teklif_tarihi)}</td><td className="p-3 text-sm text-gray-700">{formatDate(teklif.gecerlilik_tarihi)}</td><td className="p-3 text-sm text-gray-700">{formatCurrency(teklif.total_amount)}</td><td className="p-3 text-sm"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(teklif.status)}`}>{teklif.status}</span></td>{isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '100px'}} title={teklif.userId}>{teklif.userId}</td>}<td className="p-3 text-sm space-x-2"><button onClick={() => handleOpenModal(teklif)} className="text-blue-500 hover:underline">Detay</button>{teklif.status !== 'Onaylandı' && <button onClick={() => onConvertToOrder(teklif)} className="text-green-500 hover:underline">Siparişe Çevir</button>}</td></tr>))}</tbody></table></div><Modal show={isModalOpen} onClose={() => setIsModalOpen(false)} title={currentTeklif ? 'Teklif Detayı' : 'Yeni Teklif Oluştur'}><TeklifForm teklif={currentTeklif} onSave={handleSave} onCancel={() => setIsModalOpen(false)} /></Modal></div>);
+            return (<div><div className="flex justify-between items-center mb-6"><h1 className="text-3xl font-bold text-gray-800">Teklif Yönetimi</h1><button onClick={() => handleOpenModal()} className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"><PlusIcon/>Yeni Teklif</button></div><div className="overflow-auto rounded-lg shadow bg-white"><table className="w-full"><thead className="bg-gray-50 border-b-2 border-gray-200"><tr>{columns.map(h => <th key={h} className="p-3 text-sm font-semibold tracking-wide text-left">{h}</th>)}</tr></thead><tbody className="divide-y divide-gray-100">{teklifler.map(teklif => (<tr key={teklif.id} className="hover:bg-gray-50"><td className="p-3 text-sm text-gray-700 font-bold">{customers.find(c => c.id === teklif.customerId)?.name || 'Bilinmiyor'}</td><td className="p-3 text-sm text-gray-700">{formatDate(teklif.teklif_tarihi)}</td><td className="p-3 text-sm text-gray-700">{formatDate(teklif.gecerlilik_tarihi)}</td><td className="p-3 text-sm text-gray-700">{formatCurrency(teklif.total_amount)}</td><td className="p-3 text-sm"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(teklif.status)}`}>{teklif.status}</span></td>{isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '150px'}} title={allUsers.find(u => u.uid === teklif.userId)?.email}>{allUsers.find(u => u.uid === teklif.userId)?.email || teklif.userId}</td>}<td className="p-3 text-sm space-x-2"><button onClick={() => handleOpenModal(teklif)} className="text-blue-500 hover:underline">Detay</button>{teklif.status !== 'Onaylandı' && <button onClick={() => onConvertToOrder(teklif)} className="text-green-500 hover:underline">Siparişe Çevir</button>}</td></tr>))}</tbody></table></div><Modal show={isModalOpen} onClose={() => setIsModalOpen(false)} title={currentTeklif ? 'Teklif Detayı' : 'Yeni Teklif Oluştur'}><TeklifForm teklif={currentTeklif} onSave={handleSave} onCancel={() => setIsModalOpen(false)} /></Modal></div>);
         };
 
-        const Sevkiyat = ({ shipments, onDelivery, isAdmin }) => {
+        const Sevkiyat = ({ shipments, onDelivery, isAdmin, allUsers }) => {
             const handleDelivery = (shipmentId) => { onDelivery(shipmentId); };
             
-            const adminColumns = isAdmin ? ['Kullanıcı ID'] : [];
+            const adminColumns = isAdmin ? ['Kullanıcı'] : [];
             const columns = ['Sipariş ID', 'Sevk Tarihi', 'Nakliye Firması', 'Takip No', 'Teslim Tarihi', 'Durum', ...adminColumns, 'İşlem'];
 
-            return (<div><h1 className="text-3xl font-bold text-gray-800 mb-6">Sevkiyat Yönetimi</h1><div className="overflow-auto rounded-lg shadow bg-white"><table className="w-full"><thead className="bg-gray-50 border-b-2 border-gray-200"><tr>{columns.map(head => <th key={head} className="p-3 text-sm font-semibold tracking-wide text-left">{head}</th>)}</tr></thead><tbody className="divide-y divide-gray-100">{shipments.map(shipment => (<tr key={shipment.id} className="hover:bg-gray-50"><td className="p-3 text-sm text-gray-700">#{shipment.orderId}</td><td className="p-3 text-sm text-gray-700">{formatDate(shipment.shipment_date)}</td><td className="p-3 text-sm text-gray-700">{shipment.transporter}</td><td className="p-3 text-sm text-gray-700">{shipment.tracking_number}</td><td className="p-3 text-sm text-gray-700">{formatDate(shipment.delivery_date)}</td><td className="p-3 text-sm"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(shipment.status)}`}>{shipment.status}</span></td>{isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '100px'}} title={shipment.userId}>{shipment.userId}</td>}<td className="p-3 text-sm">{shipment.status !== 'Teslim Edildi' && (<button onClick={() => handleDelivery(shipment.id)} className="bg-green-500 text-white px-3 py-1 text-xs rounded-md hover:bg-green-600">Teslim Edildi</button>)}</td></tr>))}</tbody></table></div></div>);
+            return (<div><h1 className="text-3xl font-bold text-gray-800 mb-6">Sevkiyat Yönetimi</h1><div className="overflow-auto rounded-lg shadow bg-white"><table className="w-full"><thead className="bg-gray-50 border-b-2 border-gray-200"><tr>{columns.map(head => <th key={head} className="p-3 text-sm font-semibold tracking-wide text-left">{head}</th>)}</tr></thead><tbody className="divide-y divide-gray-100">{shipments.map(shipment => (<tr key={shipment.id} className="hover:bg-gray-50"><td className="p-3 text-sm text-gray-700">#{shipment.orderId}</td><td className="p-3 text-sm text-gray-700">{formatDate(shipment.shipment_date)}</td><td className="p-3 text-sm text-gray-700">{shipment.transporter}</td><td className="p-3 text-sm text-gray-700">{shipment.tracking_number}</td><td className="p-3 text-sm text-gray-700">{formatDate(shipment.delivery_date)}</td><td className="p-3 text-sm"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(shipment.status)}`}>{shipment.status}</span></td>{isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '150px'}} title={allUsers.find(u => u.uid === shipment.userId)?.email}>{allUsers.find(u => u.uid === shipment.userId)?.email || shipment.userId}</td>}<td className="p-3 text-sm">{shipment.status !== 'Teslim Edildi' && (<button onClick={() => handleDelivery(shipment.id)} className="bg-green-500 text-white px-3 py-1 text-xs rounded-md hover:bg-green-600">Teslim Edildi</button>)}</td></tr>))}</tbody></table></div></div>);
         };
 
         const GorusmeForm = ({ gorusme, onSave, onCancel, customers, onCustomerSave }) => {
@@ -723,13 +722,13 @@
             );
         };
 
-        const Gorusmeler = ({ gorusmeler, customers, onSave, onCustomerSave, isAdmin }) => {
+        const Gorusmeler = ({ gorusmeler, customers, onSave, onCustomerSave, isAdmin, allUsers }) => {
             const [isModalOpen, setIsModalOpen] = useState(false);
             const [currentGorusme, setCurrentGorusme] = useState(null);
             const handleOpenModal = (gorusme = null) => { setCurrentGorusme(gorusme); setIsModalOpen(true); };
             const handleSave = (gorusmeData) => { onSave(gorusmeData); setIsModalOpen(false); };
             
-            const adminColumns = isAdmin ? ['Kullanıcı ID'] : [];
+            const adminColumns = isAdmin ? ['Kullanıcı'] : [];
             const columns = ['Müşteri', 'Görüşme Tarihi', 'Sonuç', 'Sonraki Eylem', 'Eylem Tarihi', ...adminColumns, 'İşlemler'];
 
             return (
@@ -753,7 +752,7 @@
                                         <td className="p-3 text-sm"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(gorusme.outcome)}`}>{gorusme.outcome}</span></td>
                                         <td className="p-3 text-sm text-gray-700">{gorusme.next_action_notes}</td>
                                         <td className="p-3 text-sm text-gray-700">{formatDate(gorusme.next_action_date)}</td>
-                                        {isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '100px'}} title={gorusme.userId}>{gorusme.userId}</td>}
+                                        {isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '150px'}} title={allUsers.find(u => u.uid === gorusme.userId)?.email}>{allUsers.find(u => u.uid === gorusme.userId)?.email || gorusme.userId}</td>}
                                         <td className="p-3 text-sm text-gray-700"><button onClick={() => handleOpenModal(gorusme)} className="text-blue-500 hover:underline">Düzenle</button></td>
                                     </tr>
                                 ))}
@@ -779,6 +778,7 @@
         function CrmApp() {
             const [user, setUser] = useState(null);
             const [isAdmin, setIsAdmin] = useState(false);
+            const [allUsers, setAllUsers] = useState([]);
             const [loading, setLoading] = useState(true);
             const [connectionStatus, setConnectionStatus] = useState('Bağlanılıyor...');
             
@@ -805,38 +805,46 @@
             useEffect(() => {
                 if (!user) {
                     setCustomers([]); setProducts([]); setOrders([]);
-                    setShipments([]); setTeklifler([]); setGorusmeler([]);
+                    setShipments([]); setTeklifler([]); setGorusmeler([]); setAllUsers([]);
                     setConnectionStatus('Bağlantı Bekleniyor');
                     return;
                 }
 
-                const handleSnapshotError = (error) => {
-                    console.error("Veritabanı bağlantı hatası: ", error);
-                    setConnectionStatus('Bağlantı Hatası');
-                };
+                const handleSnapshotError = (error) => { console.error("Veritabanı hatası: ", error); setConnectionStatus('Bağlantı Hatası'); };
                 
-                const collections = ['customers', 'products', 'orders', 'shipments', 'teklifler', 'gorusmeler'];
-                const stateSetters = { customers: setCustomers, products: setProducts, orders: setOrders, shipments: setShipments, teklifler: setTeklifler, gorusmeler: setGorusmeler };
+                // Ürünler her zaman ortak alandan okunacak
+                const productsUnsub = db.collection('common/data/products').onSnapshot(
+                    snapshot => setProducts(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))),
+                    handleSnapshotError
+                );
+
+                const privateCollections = ['customers', 'orders', 'shipments', 'teklifler', 'gorusmeler'];
+                const stateSetters = { customers: setCustomers, orders: setOrders, shipments: setShipments, teklifler: setTeklifler, gorusmeler: setGorusmeler };
                 
-                let unsubscribers;
+                let unsubscribers = [productsUnsub];
 
                 if (isAdmin) {
-                    // Admin: Tüm kullanıcıların verilerini Collection Groups ile çek
-                    unsubscribers = collections.map(col => 
-                        db.collectionGroup(col).onSnapshot(
+                     // Admin tüm özel verileri okur
+                    privateCollections.forEach(col => {
+                        unsubscribers.push(db.collectionGroup(col).onSnapshot(
                             snapshot => stateSetters[col](snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, userId: doc.ref.parent.parent.id }))),
                             handleSnapshotError
-                        )
-                    );
+                        ));
+                    });
+                    // Admin, tüm kullanıcıların listesini de çeker
+                    unsubscribers.push(db.collection('users').onSnapshot(
+                        snapshot => setAllUsers(snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }))),
+                        handleSnapshotError
+                    ));
                 } else {
-                    // Normal Kullanıcı: Sadece kendi verilerini çek
+                    // Normal kullanıcı sadece kendi özel verilerini okur
                     const userSpecificPath = (collectionName) => `users/${user.uid}/${collectionName}`;
-                    unsubscribers = collections.map(col => 
-                        db.collection(userSpecificPath(col)).onSnapshot(
+                    privateCollections.forEach(col => {
+                         unsubscribers.push(db.collection(userSpecificPath(col)).onSnapshot(
                             snapshot => stateSetters[col](snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))),
                             handleSnapshotError
-                        )
-                    );
+                        ));
+                    });
                 }
                 
                 setConnectionStatus('Bağlandı');
@@ -848,11 +856,20 @@
             const handleGenericSave = (collectionName) => async (data) => {
                 if (!user) return null;
                 const { id, ...dataToSave } = data;
+                
+                let collectionPath;
                 if (collectionName === 'products') {
+                    // Ürünler ortak alana kaydedilir
                     dataToSave.cost_price = parseFloat(dataToSave.cost_price) || 0;
                     dataToSave.selling_price = parseFloat(dataToSave.selling_price) || 0;
+                    collectionPath = 'common/data/products';
+                    if(!id) dataToSave.createdBy = user.uid; // Yeni ürün ekleyeni kaydet
+                } else {
+                    // Diğer veriler kullanıcıya özel alana kaydedilir
+                    collectionPath = `users/${user.uid}/${collectionName}`;
                 }
-                const collectionRef = db.collection(`users/${user.uid}/${collectionName}`);
+
+                const collectionRef = db.collection(collectionPath);
                 if (id) {
                     await collectionRef.doc(id).update(dataToSave);
                     return id;
@@ -861,13 +878,9 @@
                     return newDocRef.id;
                 }
             };
-
-            const handleOrderSave = async (data) => {
-                const finalData = { ...data };
-                if (!finalData.status) finalData.status = 'Bekliyor';
-                if (!finalData.order_date) finalData.order_date = new Date().toISOString().slice(0, 10);
-                await handleGenericSave('orders')(finalData);
-            };
+            
+            const handleOrderSave = async (data) => { await handleGenericSave('orders')(data); };
+            const handleTeklifSave = async (data) => { await handleGenericSave('teklifler')(data); };
             
             const handleCreateShipment = async (shipmentData) => {
               if (!user) return;
@@ -883,13 +896,6 @@
               await db.collection(`users/${user.uid}/orders`).doc(shipmentData.orderId).update({ status: 'Sevk Edildi' });
             };
 
-            const handleTeklifSave = async (data) => {
-                const finalData = { ...data };
-                if (!finalData.status) finalData.status = 'Hazırlandı';
-                if (!finalData.teklif_tarihi) finalData.teklif_tarihi = new Date().toISOString().slice(0, 10);
-                await handleGenericSave('teklifler')(finalData);
-            };
-
             const handleConvertToOrder = async (teklif) => {
                 if (!user) return;
                 const newOrder = {
@@ -903,62 +909,45 @@
                     status: 'Bekliyor',
                     shipmentId: null
                 };
-                await db.collection(`users/${user.uid}/orders`).add(newOrder);
-                await db.collection(`users/${user.uid}/teklifler`).doc(teklif.id).update({ status: 'Onaylandı' });
+                const teklifOwnerId = isAdmin ? teklif.userId : user.uid;
+                await db.collection(`users/${teklifOwnerId}/orders`).add(newOrder);
+                await db.collection(`users/${teklifOwnerId}/teklifler`).doc(teklif.id).update({ status: 'Onaylandı' });
             };
 
             const handleDelivery = async (shipmentId) => {
                 if (!user) return;
                 const shipment = shipments.find(s => s.id === shipmentId);
                 if (!shipment) return;
-                const shipmentRef = db.collection(`users/${shipment.userId}/shipments`).doc(shipmentId);
+                const shipmentOwnerId = isAdmin ? shipment.userId : user.uid;
+                const shipmentRef = db.collection(`users/${shipmentOwnerId}/shipments`).doc(shipmentId);
                 
                 await shipmentRef.update({ status: 'Teslim Edildi', delivery_date: new Date().toISOString().slice(0, 10) });
-                const orderRef = db.collection(`users/${shipment.userId}/orders`).doc(shipment.orderId);
+                const orderRef = db.collection(`users/${shipmentOwnerId}/orders`).doc(shipment.orderId);
                 await orderRef.update({ status: 'Tamamlandı' });
             };
 
-            const handleLogout = async () => {
-                await auth.signOut();
-            };
+            const handleLogout = async () => { await auth.signOut(); };
             
             if (loading) {
-                return (
-                    <div className="flex h-screen items-center justify-center bg-gray-100">
-                        <div className="flex items-center gap-3 text-lg text-gray-600">
-                             <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <span>Yükleniyor...</span>
-                        </div>
-                    </div>
-                );
+                return (<div className="flex h-screen items-center justify-center bg-gray-100"><div className="flex items-center gap-3 text-lg text-gray-600"><svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Yükleniyor...</span></div></div>);
             }
             
-            if (!user) {
-                return <LoginScreen />;
-            }
+            if (!user) { return <LoginScreen />; }
 
             const renderPage = () => {
                 switch (activePage) {
                     case 'Anasayfa': return <Anasayfa customers={customers} orders={orders} shipments={shipments} teklifler={teklifler} gorusmeler={gorusmeler} />;
-                    case 'Müşteriler': return <Musteriler customers={customers} onSave={handleGenericSave('customers')} orders={orders} teklifler={teklifler} gorusmeler={gorusmeler} shipments={shipments} isAdmin={isAdmin} />;
-                    case 'Ürünler': return <Urunler products={products} onSave={handleGenericSave('products')} isAdmin={isAdmin} />;
-                    case 'Teklifler': return <Teklifler teklifler={teklifler} onSave={handleTeklifSave} onConvertToOrder={handleConvertToOrder} customers={customers} products={products} isAdmin={isAdmin} />;
-                    case 'Siparişler': return <Siparisler orders={orders} onSave={handleOrderSave} customers={customers} products={products} onShipmentCreate={handleCreateShipment} isAdmin={isAdmin} />;
-                    case 'Görüşmeler': return <Gorusmeler gorusmeler={gorusmeler} customers={customers} onSave={handleGenericSave('gorusmeler')} onCustomerSave={handleGenericSave('customers')} isAdmin={isAdmin} />;
-                    case 'Sevkiyat': return <Sevkiyat shipments={shipments} onDelivery={handleDelivery} isAdmin={isAdmin} />;
+                    case 'Müşteriler': return <Musteriler customers={customers} onSave={handleGenericSave('customers')} orders={orders} teklifler={teklifler} gorusmeler={gorusmeler} shipments={shipments} isAdmin={isAdmin} allUsers={allUsers} />;
+                    case 'Ürünler': return <Urunler products={products} onSave={handleGenericSave('products')} isAdmin={isAdmin} allUsers={allUsers} />;
+                    case 'Teklifler': return <Teklifler teklifler={teklifler} onSave={handleGenericSave('teklifler')} onConvertToOrder={handleConvertToOrder} customers={customers} products={products} isAdmin={isAdmin} allUsers={allUsers} />;
+                    case 'Siparişler': return <Siparisler orders={orders} onSave={handleGenericSave('orders')} customers={customers} products={products} onShipmentCreate={handleCreateShipment} isAdmin={isAdmin} allUsers={allUsers} />;
+                    case 'Görüşmeler': return <Gorusmeler gorusmeler={gorusmeler} customers={customers} onSave={handleGenericSave('gorusmeler')} onCustomerSave={handleGenericSave('customers')} isAdmin={isAdmin} allUsers={allUsers} />;
+                    case 'Sevkiyat': return <Sevkiyat shipments={shipments} onDelivery={handleDelivery} isAdmin={isAdmin} allUsers={allUsers} />;
                     default: return <Anasayfa />;
                 }
             };
 
-            const NavLink = ({ page, children, Icon }) => (
-                <button onClick={() => setActivePage(page)} className={`w-full flex items-center gap-3 px-4 py-2 rounded-md transition-colors ${ activePage === page ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }`}>
-                    <Icon className="w-5 h-5" />
-                    <span>{children}</span>
-                </button>
-            );
+            const NavLink = ({ page, children, Icon }) => (<button onClick={() => setActivePage(page)} className={`w-full flex items-center gap-3 px-4 py-2 rounded-md transition-colors ${ activePage === page ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }`}><Icon className="w-5 h-5" /><span>{children}</span></button>);
             
             return (
                 <div className="flex h-screen bg-gray-100 font-sans">
@@ -996,16 +985,4 @@
     </script>
 </body>
 </html>
-" code between  and  in the most up-to-date Canvas "Takip CRM (Hepsi Bir Arada)" document above and am asking a query about/based on this code below.
-Instructions to follow:
-  * Don't output/edit the document if the query is Direct/Simple. For example, if the query asks for a simple explanation, output a direct answer.
-  * Make sure to **edit** the document if the query shows the intent of editing the document, in which case output the entire edited document, **not just that section or the edits**.
-    * Don't output the same document/empty document and say that you have edited it.
-    * Don't change unrelated code in the document.
-  * Don't output  and  in your final response.
-  * Any references like "this" or "selected code" refers to the code between  and  tags.
-  * Just acknowledge my request in the introduction.
-  * Make sure to refer to the document as "Canvas" in your response.
-
-kullanıcı adı ve şifre hatalı olduğunda "Bir hata oluştu. Lütfen bilgilerinizi kontrol edin." uyarısını alıyorum. Bu uyarıyı daha belirgin hale getirelim
 
