@@ -98,7 +98,7 @@
         const DocumentTextIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>);
         const CalendarIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>);
         const PlusIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>);
-        const TrashIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>);
+        const TrashIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>);
         const LogoutIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>);
         const ArrowLeftIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>);
         const ExclamationCircleIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>);
@@ -134,7 +134,7 @@
         };
 
         const CustomerForm = ({ customer, onSave, onCancel }) => { 
-            const [formData, setFormData] = useState(customer || { name: '', contact_person: '', phone: '', email: '', address: '' }); 
+            const [formData, setFormData] = useState(customer || { name: '', contact_person: '', phone: '', email: '', address: '', sehir: '' }); 
             const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value }); 
             const handleSubmit = (e) => { e.preventDefault(); onSave(formData); }; 
             return (
@@ -143,7 +143,8 @@
                     <FormInput label="Yetkili Kişi" name="contact_person" value={formData.contact_person} onChange={handleChange} />
                     <FormInput label="Telefon" name="phone" value={formData.phone} onChange={handleChange} />
                     <FormInput label="E-posta" name="email" type="email" value={formData.email} onChange={handleChange} />
-                    <FormInput label="Adres" name="address" value={formData.address} onChange={handleChange} />
+                    <FormInput label="Şehir" name="sehir" value={formData.sehir} onChange={handleChange} />
+                    <FormTextarea label="Adres" name="address" value={formData.address} onChange={handleChange} />
                     <div className="flex justify-end gap-3 pt-4">
                         <button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">İptal</button>
                         <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Kaydet</button>
@@ -307,6 +308,7 @@
                         <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
                             <p><strong className="font-semibold">Telefon:</strong> {customer.phone || 'N/A'}</p>
                             <p><strong className="font-semibold">E-posta:</strong> {customer.email || 'N/A'}</p>
+                            <p className="col-span-2"><strong className="font-semibold">Şehir:</strong> {customer.sehir || 'N/A'}</p>
                             <p className="col-span-2"><strong className="font-semibold">Adres:</strong> {customer.address || 'N/A'}</p>
                         </div>
                     </div>
@@ -379,7 +381,7 @@
             }
             
             const adminColumns = isAdmin ? ['Kullanıcı ID'] : [];
-            const columns = ['Müşteri Adı', 'Yetkili Kişi', 'Telefon', 'E-posta', ...adminColumns, 'İşlemler'];
+            const columns = ['Müşteri Adı', 'Yetkili Kişi', 'Telefon', 'E-posta', 'Şehir', ...adminColumns, 'İşlemler'];
 
             return (
                 <div>
@@ -409,6 +411,7 @@
                                         <td className="p-3 text-sm text-gray-700">{customer.contact_person}</td>
                                         <td className="p-3 text-sm text-gray-700">{customer.phone}</td>
                                         <td className="p-3 text-sm text-gray-700">{customer.email}</td>
+                                        <td className="p-3 text-sm text-gray-700">{customer.sehir}</td>
                                         {isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '100px'}} title={customer.userId}>{customer.userId}</td>}
                                         <td className="p-3 text-sm text-gray-700">
                                             <button onClick={() => handleOpenModal(customer)} className="text-blue-500 hover:underline">Düzenle</button>
