@@ -922,7 +922,7 @@
                 const orderRef = db.collection(`users/${shipmentOwnerId}/orders`).doc(shipment.orderId);
                 await orderRef.update({ status: 'Tamamlandı' });
             };
-            
+
             const handlePrintTeklif = (teklif) => {
                 const customer = customers.find(c => c.id === teklif.customerId);
                 if (!customer) {
@@ -935,7 +935,7 @@
                     address: "Organize Sanayi Bölgesi, Sanayi Cd. No:1, Bursa",
                     phone: "0224 123 45 67",
                     email: "info@akcelik.com.tr",
-                    logoUrl: "logo-Photoroom.png"
+                    logoUrl: "https://i.ibb.co/rGFcQ4GB/logo-Photoroom.png"
                 };
 
                 const itemsHtml = teklif.items.map(item => {
