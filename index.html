@@ -29,7 +29,6 @@
         //---------------------------------------------------
         // YÖNETİCİ KULLANICI AYARI
         //---------------------------------------------------
-        // BURAYA KENDİ KULLANICI ID'NİZİ YAPIŞTIRIN
         const ADMIN_UID = "ZVlZOQfBO7YS0OjzpnpS9lj4RFu1";
 
         //---------------------------------------------------
@@ -44,13 +43,12 @@
           appId: "1:342863238377:web:bc010cc0233bf863c8cc78"
         };
 
-        // Firebase'i v8 uyumlu (compat) modda başlat
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
 
         //---------------------------------------------------
-        // KDV Bilgileri (Türkiye için güncel)
+        // KDV Bilgileri
         //---------------------------------------------------
         const turkeyVATRates = [
             { rate: 20, description: "Genel KDV oranı" },
@@ -60,7 +58,7 @@
         ];
 
         //---------------------------------------------------
-        // Genel Bileşenler (Modal, İkonlar vb.)
+        // Genel Bileşenler ve Yardımcı Fonksiyonlar
         //---------------------------------------------------
         const Modal = ({ show, onClose, title, children }) => {
             if (!show) return null;
@@ -998,4 +996,16 @@
     </script>
 </body>
 </html>
+" code between  and  in the most up-to-date Canvas "Takip CRM (Hepsi Bir Arada)" document above and am asking a query about/based on this code below.
+Instructions to follow:
+  * Don't output/edit the document if the query is Direct/Simple. For example, if the query asks for a simple explanation, output a direct answer.
+  * Make sure to **edit** the document if the query shows the intent of editing the document, in which case output the entire edited document, **not just that section or the edits**.
+    * Don't output the same document/empty document and say that you have edited it.
+    * Don't change unrelated code in the document.
+  * Don't output  and  in your final response.
+  * Any references like "this" or "selected code" refers to the code between  and  tags.
+  * Just acknowledge my request in the introduction.
+  * Make sure to refer to the document as "Canvas" in your response.
+
+kullanıcı adı ve şifre hatalı olduğunda "Bir hata oluştu. Lütfen bilgilerinizi kontrol edin." uyarısını alıyorum. Bu uyarıyı daha belirgin hale getirelim
 
