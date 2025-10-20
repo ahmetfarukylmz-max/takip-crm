@@ -455,12 +455,13 @@
                 ); 
             };
             
-            const columns = ['Ürün Adı', 'Ürün Kodu', 'Maliyet Fiyatı', 'Satış Fiyatı', 'Ekleyen Kullanıcı', 'İşlemler'];
+            const adminColumns = isAdmin ? ['Kullanıcı ID'] : [];
+            const columns = ['Ürün Adı', 'Ürün Kodu', 'Maliyet Fiyatı', 'Satış Fiyatı', ...adminColumns, 'İşlemler'];
             
             return (
                 <div>
                     <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-3xl font-bold text-gray-800">Ortak Ürün Kataloğu</h1>
+                        <h1 className="text-3xl font-bold text-gray-800">Ürün Yönetimi</h1>
                         <button onClick={() => handleOpenModal()} className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"><PlusIcon/>Yeni Ürün</button>
                     </div>
                     <div className="overflow-auto rounded-lg shadow bg-white">
@@ -475,7 +476,7 @@
                                         <td className="p-3 text-sm text-gray-700">{product.code}</td>
                                         <td className="p-3 text-sm text-gray-700">{formatCurrency(product.cost_price)}</td>
                                         <td className="p-3 text-sm text-gray-700">{formatCurrency(product.selling_price)}</td>
-                                        <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '150px'}} title={allUsers.find(u => u.uid === product.createdBy)?.email}>{allUsers.find(u => u.uid === product.createdBy)?.email || product.createdBy}</td>
+                                        {isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '150px'}} title={allUsers.find(u => u.uid === product.userId)?.email}>{allUsers.find(u => u.uid === product.userId)?.email || product.userId}</td>}
                                         <td className="p-3 text-sm text-gray-700"><button onClick={() => handleOpenModal(product)} className="text-blue-500 hover:underline">Düzenle</button></td>
                                     </tr>
                                 ))}
@@ -815,20 +816,14 @@
 
                 const handleSnapshotError = (error) => { console.error("Veritabanı hatası: ", error); setConnectionStatus('Bağlantı Hatası'); };
                 
-                // Ürünler her zaman ortak alandan okunacak
-                const productsUnsub = db.collection('common/data/products').onSnapshot(
-                    snapshot => setProducts(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))),
-                    handleSnapshotError
-                );
-
-                const privateCollections = ['customers', 'orders', 'shipments', 'teklifler', 'gorusmeler'];
-                const stateSetters = { customers: setCustomers, orders: setOrders, shipments: setShipments, teklifler: setTeklifler, gorusmeler: setGorusmeler };
+                const collections = ['customers', 'products', 'orders', 'shipments', 'teklifler', 'gorusmeler'];
+                const stateSetters = { customers: setCustomers, products: setProducts, orders: setOrders, shipments: setShipments, teklifler: setTeklifler, gorusmeler: setGorusmeler };
                 
-                let unsubscribers = [productsUnsub];
+                let unsubscribers = [];
 
                 if (isAdmin) {
-                     // Admin tüm özel verileri okur
-                    privateCollections.forEach(col => {
+                    // Admin: Tüm kullanıcıların verilerini Collection Groups ile çek
+                    collections.forEach(col => {
                         unsubscribers.push(db.collectionGroup(col).onSnapshot(
                             snapshot => stateSetters[col](snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, userId: doc.ref.parent.parent.id }))),
                             handleSnapshotError
@@ -840,9 +835,9 @@
                         handleSnapshotError
                     ));
                 } else {
-                    // Normal kullanıcı sadece kendi özel verilerini okur
+                    // Normal Kullanıcı: Sadece kendi verilerini çek
                     const userSpecificPath = (collectionName) => `users/${user.uid}/${collectionName}`;
-                    privateCollections.forEach(col => {
+                    collections.forEach(col => {
                          unsubscribers.push(db.collection(userSpecificPath(col)).onSnapshot(
                             snapshot => stateSetters[col](snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))),
                             handleSnapshotError
@@ -860,19 +855,14 @@
                 if (!user) return null;
                 const { id, ...dataToSave } = data;
                 
-                let collectionPath;
                 if (collectionName === 'products') {
-                    // Ürünler ortak alana kaydedilir
                     dataToSave.cost_price = parseFloat(dataToSave.cost_price) || 0;
                     dataToSave.selling_price = parseFloat(dataToSave.selling_price) || 0;
-                    collectionPath = 'common/data/products';
-                    if(!id) dataToSave.createdBy = user.uid; // Yeni ürün ekleyeni kaydet
-                } else {
-                    // Diğer veriler kullanıcıya özel alana kaydedilir
-                    collectionPath = `users/${user.uid}/${collectionName}`;
                 }
 
+                const collectionPath = `users/${user.uid}/${collectionName}`;
                 const collectionRef = db.collection(collectionPath);
+                
                 if (id) {
                     await collectionRef.doc(id).update(dataToSave);
                     return id;
@@ -895,8 +885,11 @@
                 status: 'Yolda', 
                 delivery_date: null,
               };
-              await db.collection(`users/${user.uid}/shipments`).add(newShipment);
-              await db.collection(`users/${user.uid}/orders`).doc(shipmentData.orderId).update({ status: 'Sevk Edildi' });
+              const order = orders.find(o => o.id === shipmentData.orderId);
+              const shipmentOwnerId = isAdmin ? order.userId : user.uid;
+
+              await db.collection(`users/${shipmentOwnerId}/shipments`).add(newShipment);
+              await db.collection(`users/${shipmentOwnerId}/orders`).doc(shipmentData.orderId).update({ status: 'Sevk Edildi' });
             };
 
             const handleConvertToOrder = async (teklif) => {
