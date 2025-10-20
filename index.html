@@ -102,6 +102,7 @@
         const LogoutIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>);
         const ArrowLeftIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>);
         const ExclamationCircleIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>);
+        const PrinterIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H7a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm2-9V5a2 2 0 012-2h2a2 2 0 012 2v3m-4 0H9" /></svg>);
 
 
         // --- Form Bileşenleri ---
@@ -308,7 +309,7 @@
                         <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
                             <p><strong className="font-semibold">Telefon:</strong> {customer.phone || 'N/A'}</p>
                             <p><strong className="font-semibold">E-posta:</strong> {customer.email || 'N/A'}</p>
-                            <p className="col-span-2"><strong className="font-semibold">Şehir:</strong> {customer.sehir || 'N/A'}</p>
+                            <p><strong className="font-semibold">Şehir:</strong> {customer.sehir || 'N/A'}</p>
                             <p className="col-span-2"><strong className="font-semibold">Adres:</strong> {customer.address || 'N/A'}</p>
                         </div>
                     </div>
@@ -355,7 +356,7 @@
             );
         };
 
-        const Musteriler = ({ customers, onSave, orders, teklifler, gorusmeler, shipments, isAdmin }) => {
+        const Musteriler = ({ customers, onSave, orders, teklifler, gorusmeler, shipments, isAdmin, allUsers }) => {
             const [isListModalOpen, setIsListModalOpen] = useState(false);
             const [selectedCustomer, setSelectedCustomer] = useState(null);
 
@@ -380,7 +381,7 @@
                 />
             }
             
-            const adminColumns = isAdmin ? ['Kullanıcı ID'] : [];
+            const adminColumns = isAdmin ? ['Kullanıcı'] : [];
             const columns = ['Müşteri Adı', 'Yetkili Kişi', 'Telefon', 'E-posta', 'Şehir', ...adminColumns, 'İşlemler'];
 
             return (
@@ -412,7 +413,7 @@
                                         <td className="p-3 text-sm text-gray-700">{customer.phone}</td>
                                         <td className="p-3 text-sm text-gray-700">{customer.email}</td>
                                         <td className="p-3 text-sm text-gray-700">{customer.sehir}</td>
-                                        {isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '100px'}} title={customer.userId}>{customer.userId}</td>}
+                                        {isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '150px'}} title={allUsers.find(u => u.uid === customer.userId)?.email}>{allUsers.find(u => u.uid === customer.userId)?.email || customer.userId}</td>}
                                         <td className="p-3 text-sm text-gray-700">
                                             <button onClick={() => handleOpenModal(customer)} className="text-blue-500 hover:underline">Düzenle</button>
                                         </td>
@@ -455,7 +456,7 @@
                 ); 
             };
             
-            const adminColumns = isAdmin ? ['Kullanıcı ID'] : [];
+            const adminColumns = isAdmin ? ['Kullanıcı'] : [];
             const columns = ['Ürün Adı', 'Ürün Kodu', 'Maliyet Fiyatı', 'Satış Fiyatı', ...adminColumns, 'İşlemler'];
             
             return (
@@ -604,7 +605,7 @@
             );
         };
 
-        const Teklifler = ({ teklifler, onSave, onConvertToOrder, customers, products, isAdmin, allUsers }) => {
+        const Teklifler = ({ teklifler, onSave, onConvertToOrder, customers, products, isAdmin, allUsers, onPrint }) => {
             const [isModalOpen, setIsModalOpen] = useState(false); const [currentTeklif, setCurrentTeklif] = useState(null); const handleOpenModal = (teklif = null) => { setCurrentTeklif(teklif); setIsModalOpen(true); };
             const handleSave = (teklifData) => { onSave(teklifData); setIsModalOpen(false); };
             const TeklifForm = ({ teklif, onSave, onCancel }) => { 
@@ -647,7 +648,7 @@
             const adminColumns = isAdmin ? ['Kullanıcı'] : [];
             const columns = ['Müşteri', 'Teklif Tarihi', 'Geçerlilik Tarihi', 'Tutar', 'Durum', ...adminColumns, 'İşlemler'];
             
-            return (<div><div className="flex justify-between items-center mb-6"><h1 className="text-3xl font-bold text-gray-800">Teklif Yönetimi</h1><button onClick={() => handleOpenModal()} className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"><PlusIcon/>Yeni Teklif</button></div><div className="overflow-auto rounded-lg shadow bg-white"><table className="w-full"><thead className="bg-gray-50 border-b-2 border-gray-200"><tr>{columns.map(h => <th key={h} className="p-3 text-sm font-semibold tracking-wide text-left">{h}</th>)}</tr></thead><tbody className="divide-y divide-gray-100">{teklifler.map(teklif => (<tr key={teklif.id} className="hover:bg-gray-50"><td className="p-3 text-sm text-gray-700 font-bold">{customers.find(c => c.id === teklif.customerId)?.name || 'Bilinmiyor'}</td><td className="p-3 text-sm text-gray-700">{formatDate(teklif.teklif_tarihi)}</td><td className="p-3 text-sm text-gray-700">{formatDate(teklif.gecerlilik_tarihi)}</td><td className="p-3 text-sm text-gray-700">{formatCurrency(teklif.total_amount)}</td><td className="p-3 text-sm"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(teklif.status)}`}>{teklif.status}</span></td>{isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '150px'}} title={allUsers.find(u => u.uid === teklif.userId)?.email}>{allUsers.find(u => u.uid === teklif.userId)?.email || teklif.userId}</td>}<td className="p-3 text-sm space-x-2"><button onClick={() => handleOpenModal(teklif)} className="text-blue-500 hover:underline">Detay</button>{teklif.status !== 'Onaylandı' && <button onClick={() => onConvertToOrder(teklif)} className="text-green-500 hover:underline">Siparişe Çevir</button>}</td></tr>))}</tbody></table></div><Modal show={isModalOpen} onClose={() => setIsModalOpen(false)} title={currentTeklif ? 'Teklif Detayı' : 'Yeni Teklif Oluştur'}><TeklifForm teklif={currentTeklif} onSave={handleSave} onCancel={() => setIsModalOpen(false)} /></Modal></div>);
+            return (<div><div className="flex justify-between items-center mb-6"><h1 className="text-3xl font-bold text-gray-800">Teklif Yönetimi</h1><button onClick={() => handleOpenModal()} className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"><PlusIcon/>Yeni Teklif</button></div><div className="overflow-auto rounded-lg shadow bg-white"><table className="w-full"><thead className="bg-gray-50 border-b-2 border-gray-200"><tr>{columns.map(h => <th key={h} className="p-3 text-sm font-semibold tracking-wide text-left">{h}</th>)}</tr></thead><tbody className="divide-y divide-gray-100">{teklifler.map(teklif => (<tr key={teklif.id} className="hover:bg-gray-50"><td className="p-3 text-sm text-gray-700 font-bold">{customers.find(c => c.id === teklif.customerId)?.name || 'Bilinmiyor'}</td><td className="p-3 text-sm text-gray-700">{formatDate(teklif.teklif_tarihi)}</td><td className="p-3 text-sm text-gray-700">{formatDate(teklif.gecerlilik_tarihi)}</td><td className="p-3 text-sm text-gray-700">{formatCurrency(teklif.total_amount)}</td><td className="p-3 text-sm"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(teklif.status)}`}>{teklif.status}</span></td>{isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '150px'}} title={allUsers.find(u => u.uid === teklif.userId)?.email}>{allUsers.find(u => u.uid === teklif.userId)?.email || teklif.userId}</td>}<td className="p-3 text-sm space-x-2"><button onClick={() => handleOpenModal(teklif)} className="text-blue-500 hover:underline">Detay</button><button onClick={() => onPrint(teklif)} className="text-purple-500 hover:underline">PDF</button>{teklif.status !== 'Onaylandı' && <button onClick={() => onConvertToOrder(teklif)} className="text-green-500 hover:underline">Siparişe Çevir</button>}</td></tr>))}</tbody></table></div><Modal show={isModalOpen} onClose={() => setIsModalOpen(false)} title={currentTeklif ? 'Teklif Detayı' : 'Yeni Teklif Oluştur'}><TeklifForm teklif={currentTeklif} onSave={handleSave} onCancel={() => setIsModalOpen(false)} /></Modal></div>);
         };
 
         const Sevkiyat = ({ shipments, onDelivery, isAdmin, allUsers }) => {
@@ -921,6 +922,123 @@
                 const orderRef = db.collection(`users/${shipmentOwnerId}/orders`).doc(shipment.orderId);
                 await orderRef.update({ status: 'Tamamlandı' });
             };
+            
+            const handlePrintTeklif = (teklif) => {
+                const customer = customers.find(c => c.id === teklif.customerId);
+                if (!customer) {
+                    alert('Müşteri bilgileri bulunamadı!');
+                    return;
+                }
+                
+                const companyInfo = {
+                    name: "AKÇELİK METAL SANAYİ",
+                    address: "Organize Sanayi Bölgesi, Sanayi Cd. No:1, Bursa",
+                    phone: "0224 123 45 67",
+                    email: "info@akcelik.com.tr",
+                    logoUrl: "logo-Photoroom.png"
+                };
+
+                const itemsHtml = teklif.items.map(item => {
+                    const product = products.find(p => p.id === item.productId);
+                    return `
+                        <tr class="border-b">
+                            <td class="py-2 px-4">${product ? product.name : 'Bilinmeyen Ürün'}</td>
+                            <td class="py-2 px-4 text-center">${item.quantity}</td>
+                            <td class="py-2 px-4 text-right">${formatCurrency(item.unit_price)}</td>
+                            <td class="py-2 px-4 text-right">${formatCurrency(item.quantity * item.unit_price)}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                const printContent = `
+                    <html>
+                    <head>
+                        <title>Teklif #${teklif.id.substring(0, 8)}</title>
+                        <script src="https://cdn.tailwindcss.com"><\/script>
+                        <style>
+                            @media print {
+                                body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                                .no-print { display: none; }
+                            }
+                        </style>
+                    </head>
+                    <body class="bg-gray-100 font-sans p-8">
+                        <div class="max-w-4xl mx-auto bg-white p-12 shadow-2xl rounded-lg">
+                            <header class="flex justify-between items-start pb-8 border-b">
+                                <div>
+                                    <img src="${companyInfo.logoUrl}" alt="${companyInfo.name} Logosu" class="h-20 mb-4"/>
+                                    <h1 class="text-2xl font-bold text-gray-800">${companyInfo.name}</h1>
+                                    <p class="text-sm text-gray-500">${companyInfo.address}</p>
+                                    <p class="text-sm text-gray-500">${companyInfo.phone} | ${companyInfo.email}</p>
+                                </div>
+                                <div class="text-right">
+                                    <h2 class="text-4xl font-bold uppercase text-blue-600">Teklif</h2>
+                                    <p class="text-sm text-gray-500 mt-2">Teklif No: #${teklif.id.substring(0, 8).toUpperCase()}</p>
+                                    <p class="text-sm text-gray-500">Tarih: ${formatDate(teklif.teklif_tarihi)}</p>
+                                    <p class="text-sm text-gray-500">Geçerlilik: ${formatDate(teklif.gecerlilik_tarihi)}</p>
+                                </div>
+                            </header>
+
+                            <section class="mt-8">
+                                <h3 class="text-lg font-semibold text-gray-700">Müşteri Bilgileri</h3>
+                                <div class="bg-gray-50 p-4 rounded-md mt-2 text-sm">
+                                    <p class="font-bold text-gray-800">${customer.name}</p>
+                                    <p>${customer.address || ''}, ${customer.sehir || ''}</p>
+                                    <p>${customer.phone || ''}</p>
+                                    <p>${customer.email || ''}</p>
+                                </div>
+                            </section>
+
+                            <section class="mt-8">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-gray-100">
+                                        <tr>
+                                            <th class="py-2 px-4 text-left font-semibold text-gray-600">Ürün/Hizmet</th>
+                                            <th class="py-2 px-4 text-center font-semibold text-gray-600">Miktar</th>
+                                            <th class="py-2 px-4 text-right font-semibold text-gray-600">Birim Fiyat</th>
+                                            <th class="py-2 px-4 text-right font-semibold text-gray-600">Toplam</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${itemsHtml}
+                                    </tbody>
+                                </table>
+                            </section>
+
+                            <section class="mt-8 flex justify-end">
+                                <div class="w-1/2">
+                                    <div class="flex justify-between text-sm py-2 border-b">
+                                        <span class="font-semibold text-gray-600">Ara Toplam:</span>
+                                        <span>${formatCurrency(teklif.subtotal)}</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm py-2 border-b">
+                                        <span class="font-semibold text-gray-600">KDV (%${teklif.vatRate}):</span>
+                                        <span>${formatCurrency(teklif.vatAmount)}</span>
+                                    </div>
+                                    <div class="flex justify-between text-xl font-bold py-3 bg-gray-100 px-4 rounded-md">
+                                        <span class="text-gray-800">Genel Toplam:</span>
+                                        <span class="text-blue-600">${formatCurrency(teklif.total_amount)}</span>
+                                    </div>
+                                </div>
+                            </section>
+                            
+                            <footer class="mt-12 pt-6 border-t text-center text-xs text-gray-500">
+                                <p>Teklifimizle ilgilendiğiniz için teşekkür ederiz.</p>
+                                <p>Banka Bilgileri: TR... | Açıklama...</p>
+                            </footer>
+                        </div>
+                        <div class="text-center mt-8 no-print">
+                            <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">Yazdır</button>
+                        </div>
+                    </body>
+                    </html>
+                `;
+
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(printContent);
+                printWindow.document.close();
+            };
+
 
             const handleLogout = async () => { await auth.signOut(); };
             
@@ -935,7 +1053,7 @@
                     case 'Anasayfa': return <Anasayfa customers={customers} orders={orders} shipments={shipments} teklifler={teklifler} gorusmeler={gorusmeler} />;
                     case 'Müşteriler': return <Musteriler customers={customers} onSave={handleGenericSave('customers')} orders={orders} teklifler={teklifler} gorusmeler={gorusmeler} shipments={shipments} isAdmin={isAdmin} allUsers={allUsers} />;
                     case 'Ürünler': return <Urunler products={products} onSave={handleGenericSave('products')} isAdmin={isAdmin} allUsers={allUsers} />;
-                    case 'Teklifler': return <Teklifler teklifler={teklifler} onSave={handleGenericSave('teklifler')} onConvertToOrder={handleConvertToOrder} customers={customers} products={products} isAdmin={isAdmin} allUsers={allUsers} />;
+                    case 'Teklifler': return <Teklifler teklifler={teklifler} onSave={handleGenericSave('teklifler')} onConvertToOrder={handleConvertToOrder} customers={customers} products={products} isAdmin={isAdmin} allUsers={allUsers} onPrint={handlePrintTeklif} />;
                     case 'Siparişler': return <Siparisler orders={orders} onSave={handleGenericSave('orders')} customers={customers} products={products} onShipmentCreate={handleCreateShipment} isAdmin={isAdmin} allUsers={allUsers} />;
                     case 'Görüşmeler': return <Gorusmeler gorusmeler={gorusmeler} customers={customers} onSave={handleGenericSave('gorusmeler')} onCustomerSave={handleGenericSave('customers')} isAdmin={isAdmin} allUsers={allUsers} />;
                     case 'Sevkiyat': return <Sevkiyat shipments={shipments} onDelivery={handleDelivery} isAdmin={isAdmin} allUsers={allUsers} />;
