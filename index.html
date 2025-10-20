@@ -74,6 +74,23 @@
                 </div>
             );
         };
+        
+        const ConfirmationModal = ({ show, onClose, onConfirm, title, message }) => {
+            if (!show) return null;
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center">
+                    <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+                        <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
+                        <p className="mt-2 text-gray-600">{message}</p>
+                        <div className="flex justify-end gap-3 mt-6">
+                            <button onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">İptal</button>
+                            <button onClick={onConfirm} className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Evet, Sil</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
 
         const getStatusClass = (status) => {
             switch (status) {
@@ -521,11 +538,13 @@
             );
         };
 
-        const Siparisler = ({ orders, onSave, customers, products, onShipmentCreate, isAdmin, allUsers }) => {
+        const Siparisler = ({ orders, onSave, customers, products, onShipmentCreate, isAdmin, allUsers, onDelete }) => {
             const [isModalOpen, setIsModalOpen] = useState(false); 
             const [currentOrder, setCurrentOrder] = useState(null); 
             const [isShipmentModalOpen, setIsShipmentModalOpen] = useState(false);
             const [orderToShip, setOrderToShip] = useState(null);
+            const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+            const [orderToDelete, setOrderToDelete] = useState(null);
 
             const handleOpenModal = (order = null) => { setCurrentOrder(order); setIsModalOpen(true); };
             const handleSave = (orderData) => { onSave(orderData); setIsModalOpen(false); };
@@ -535,6 +554,20 @@
                 setOrderToShip({ ...order, customerName: customer?.name || 'Bilinmeyen Müşteri' });
                 setIsShipmentModalOpen(true);
             };
+            
+            const openDeleteModal = (order) => {
+                setOrderToDelete(order);
+                setIsDeleteModalOpen(true);
+            };
+
+            const confirmDelete = () => {
+                if (orderToDelete) {
+                    onDelete(orderToDelete);
+                    setIsDeleteModalOpen(false);
+                    setOrderToDelete(null);
+                }
+            };
+
 
             const handleCreateShipment = (shipmentData) => {
                 onShipmentCreate(shipmentData);
@@ -588,6 +621,7 @@
                                             {['Bekliyor', 'Hazırlanıyor'].includes(order.status) && (
                                                 <button onClick={() => handleOpenShipmentModal(order)} className="text-green-500 hover:underline">Sevk Et</button>
                                             )}
+                                            <button onClick={() => openDeleteModal(order)} className="text-red-500 hover:underline">Sil</button>
                                         </td>
                                     </tr>
                                 ))}
@@ -600,6 +634,13 @@
                             <SevkiyatForm order={orderToShip} onSave={handleCreateShipment} onCancel={() => setIsShipmentModalOpen(false)} />
                         </Modal>
                     )}
+                    <ConfirmationModal 
+                        show={isDeleteModalOpen}
+                        onClose={() => setIsDeleteModalOpen(false)}
+                        onConfirm={confirmDelete}
+                        title="Siparişi Sil"
+                        message="Bu siparişi kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+                    />
                 </div>
             );
         };
@@ -650,13 +691,26 @@
             return (<div><div className="flex justify-between items-center mb-6"><h1 className="text-3xl font-bold text-gray-800">Teklif Yönetimi</h1><button onClick={() => handleOpenModal()} className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"><PlusIcon/>Yeni Teklif</button></div><div className="overflow-auto rounded-lg shadow bg-white"><table className="w-full"><thead className="bg-gray-50 border-b-2 border-gray-200"><tr>{columns.map(h => <th key={h} className="p-3 text-sm font-semibold tracking-wide text-left">{h}</th>)}</tr></thead><tbody className="divide-y divide-gray-100">{teklifler.map(teklif => (<tr key={teklif.id} className="hover:bg-gray-50"><td className="p-3 text-sm text-gray-700 font-bold">{customers.find(c => c.id === teklif.customerId)?.name || 'Bilinmiyor'}</td><td className="p-3 text-sm text-gray-700">{formatDate(teklif.teklif_tarihi)}</td><td className="p-3 text-sm text-gray-700">{formatDate(teklif.gecerlilik_tarihi)}</td><td className="p-3 text-sm text-gray-700">{formatCurrency(teklif.total_amount)}</td><td className="p-3 text-sm"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(teklif.status)}`}>{teklif.status}</span></td>{isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '150px'}} title={allUsers.find(u => u.uid === teklif.userId)?.email}>{allUsers.find(u => u.uid === teklif.userId)?.email || teklif.userId}</td>}<td className="p-3 text-sm space-x-2"><button onClick={() => handleOpenModal(teklif)} className="text-blue-500 hover:underline">Detay</button><button onClick={() => onPrint(teklif)} className="text-purple-500 hover:underline">PDF</button>{teklif.status !== 'Onaylandı' && <button onClick={() => onConvertToOrder(teklif)} className="text-green-500 hover:underline">Siparişe Çevir</button>}</td></tr>))}</tbody></table></div><Modal show={isModalOpen} onClose={() => setIsModalOpen(false)} title={currentTeklif ? 'Teklif Detayı' : 'Yeni Teklif Oluştur'}><TeklifForm teklif={currentTeklif} onSave={handleSave} onCancel={() => setIsModalOpen(false)} /></Modal></div>);
         };
 
-        const Sevkiyat = ({ shipments, onDelivery, isAdmin, allUsers }) => {
-            const handleDelivery = (shipmentId) => { onDelivery(shipmentId); };
+        const Sevkiyat = ({ shipments, onShipmentStatusChange, isAdmin, allUsers }) => {
+            const handleStatusChange = (shipmentId, newStatus) => {
+                onShipmentStatusChange(shipmentId, newStatus);
+            };
             
             const adminColumns = isAdmin ? ['Kullanıcı'] : [];
-            const columns = ['Sipariş ID', 'Sevk Tarihi', 'Nakliye Firması', 'Takip No', 'Teslim Tarihi', 'Durum', ...adminColumns, 'İşlem'];
+            const columns = ['Sipariş ID', 'Sevk Tarihi', 'Nakliye Firması', 'Takip No', 'Teslim Tarihi', 'Durum', ...adminColumns];
 
-            return (<div><h1 className="text-3xl font-bold text-gray-800 mb-6">Sevkiyat Yönetimi</h1><div className="overflow-auto rounded-lg shadow bg-white"><table className="w-full"><thead className="bg-gray-50 border-b-2 border-gray-200"><tr>{columns.map(head => <th key={head} className="p-3 text-sm font-semibold tracking-wide text-left">{head}</th>)}</tr></thead><tbody className="divide-y divide-gray-100">{shipments.map(shipment => (<tr key={shipment.id} className="hover:bg-gray-50"><td className="p-3 text-sm text-gray-700">#{shipment.orderId}</td><td className="p-3 text-sm text-gray-700">{formatDate(shipment.shipment_date)}</td><td className="p-3 text-sm text-gray-700">{shipment.transporter}</td><td className="p-3 text-sm text-gray-700">{shipment.tracking_number}</td><td className="p-3 text-sm text-gray-700">{formatDate(shipment.delivery_date)}</td><td className="p-3 text-sm"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(shipment.status)}`}>{shipment.status}</span></td>{isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '150px'}} title={allUsers.find(u => u.uid === shipment.userId)?.email}>{allUsers.find(u => u.uid === shipment.userId)?.email || shipment.userId}</td>}<td className="p-3 text-sm">{shipment.status !== 'Teslim Edildi' && (<button onClick={() => handleDelivery(shipment.id)} className="bg-green-500 text-white px-3 py-1 text-xs rounded-md hover:bg-green-600">Teslim Edildi</button>)}</td></tr>))}</tbody></table></div></div>);
+            return (<div><h1 className="text-3xl font-bold text-gray-800 mb-6">Sevkiyat Yönetimi</h1><div className="overflow-auto rounded-lg shadow bg-white"><table className="w-full"><thead className="bg-gray-50 border-b-2 border-gray-200"><tr>{columns.map(head => <th key={head} className="p-3 text-sm font-semibold tracking-wide text-left">{head}</th>)}</tr></thead><tbody className="divide-y divide-gray-100">{shipments.map(shipment => (<tr key={shipment.id} className="hover:bg-gray-50"><td className="p-3 text-sm text-gray-700">#{shipment.orderId}</td><td className="p-3 text-sm text-gray-700">{formatDate(shipment.shipment_date)}</td><td className="p-3 text-sm text-gray-700">{shipment.transporter}</td><td className="p-3 text-sm text-gray-700">{shipment.tracking_number}</td><td className="p-3 text-sm text-gray-700">{formatDate(shipment.delivery_date)}</td><td className="p-3 text-sm">
+                <select 
+                    value={shipment.status} 
+                    onChange={(e) => handleStatusChange(shipment.id, e.target.value)}
+                    disabled={shipment.status === 'Teslim Edildi'}
+                    className={`w-full p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg border-2 ${getStatusClass(shipment.status)}`}
+                >
+                    <option value="Hazırlanıyor">Hazırlanıyor</option>
+                    <option value="Yolda">Yolda</option>
+                    <option value="Teslim Edildi">Teslim Edildi</option>
+                </select>
+            </td>{isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '150px'}} title={allUsers.find(u => u.uid === shipment.userId)?.email}>{allUsers.find(u => u.uid === shipment.userId)?.email || shipment.userId}</td>}</tr>))}</tbody></table></div></div>);
         };
 
         const GorusmeForm = ({ gorusme, onSave, onCancel, customers, onCustomerSave }) => {
@@ -913,16 +967,26 @@
                 await db.collection(`users/${teklifOwnerId}/teklifler`).doc(teklif.id).update({ status: 'Onaylandı' });
             };
 
-            const handleDelivery = async (shipmentId) => {
+            const handleShipmentStatusChange = async (shipmentId, newStatus) => {
                 if (!user) return;
                 const shipment = shipments.find(s => s.id === shipmentId);
                 if (!shipment) return;
+
                 const shipmentOwnerId = isAdmin ? shipment.userId : user.uid;
                 const shipmentRef = db.collection(`users/${shipmentOwnerId}/shipments`).doc(shipmentId);
-                
-                await shipmentRef.update({ status: 'Teslim Edildi', delivery_date: new Date().toISOString().slice(0, 10) });
-                const orderRef = db.collection(`users/${shipmentOwnerId}/orders`).doc(shipment.orderId);
-                await orderRef.update({ status: 'Tamamlandı' });
+
+                const updates = { status: newStatus };
+
+                if (newStatus === 'Teslim Edildi') {
+                    updates.delivery_date = new Date().toISOString().slice(0, 10);
+                    await shipmentRef.update(updates);
+
+                    const orderRef = db.collection(`users/${shipmentOwnerId}/orders`).doc(shipment.orderId);
+                    await orderRef.update({ status: 'Tamamlandı' });
+                } else {
+                     updates.delivery_date = null; // Teslimat tarihini temizle
+                    await shipmentRef.update(updates);
+                }
             };
             
             const handlePrintTeklif = (teklif) => {
@@ -1040,6 +1104,16 @@
                 printWindow.document.write(printContent);
                 printWindow.document.close();
             };
+            
+            const handleOrderDelete = async (order) => {
+                if (!user) return;
+                const ownerId = isAdmin ? order.userId : user.uid;
+                if (!ownerId) {
+                    console.error("Silinecek siparişin sahibi bulunamadı.");
+                    return;
+                }
+                await db.collection(`users/${ownerId}/orders`).doc(order.id).delete();
+            };
 
 
             const handleLogout = async () => { await auth.signOut(); };
@@ -1056,9 +1130,9 @@
                     case 'Müşteriler': return <Musteriler customers={customers} onSave={handleGenericSave('customers')} orders={orders} teklifler={teklifler} gorusmeler={gorusmeler} shipments={shipments} isAdmin={isAdmin} allUsers={allUsers} />;
                     case 'Ürünler': return <Urunler products={products} onSave={handleGenericSave('products')} isAdmin={isAdmin} allUsers={allUsers} />;
                     case 'Teklifler': return <Teklifler teklifler={teklifler} onSave={handleGenericSave('teklifler')} onConvertToOrder={handleConvertToOrder} customers={customers} products={products} isAdmin={isAdmin} allUsers={allUsers} onPrint={handlePrintTeklif} />;
-                    case 'Siparişler': return <Siparisler orders={orders} onSave={handleGenericSave('orders')} customers={customers} products={products} onShipmentCreate={handleCreateShipment} isAdmin={isAdmin} allUsers={allUsers} />;
+                    case 'Siparişler': return <Siparisler orders={orders} onSave={handleGenericSave('orders')} customers={customers} products={products} onShipmentCreate={handleCreateShipment} isAdmin={isAdmin} allUsers={allUsers} onDelete={handleOrderDelete} />;
                     case 'Görüşmeler': return <Gorusmeler gorusmeler={gorusmeler} customers={customers} onSave={handleGenericSave('gorusmeler')} onCustomerSave={handleGenericSave('customers')} isAdmin={isAdmin} allUsers={allUsers} />;
-                    case 'Sevkiyat': return <Sevkiyat shipments={shipments} onDelivery={handleDelivery} isAdmin={isAdmin} allUsers={allUsers} />;
+                    case 'Sevkiyat': return <Sevkiyat shipments={shipments} onShipmentStatusChange={handleShipmentStatusChange} isAdmin={isAdmin} allUsers={allUsers} />;
                     default: return <Anasayfa />;
                 }
             };
