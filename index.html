@@ -25,6 +25,12 @@
     <!-- 5. React Kodunu (CrmApp.jsx) Buraya Ekle -->
     <script type="text/babel">
         const { useState, useEffect } = React;
+        
+        //---------------------------------------------------
+        // YÖNETİCİ KULLANICI AYARI
+        //---------------------------------------------------
+        // BURAYA KENDİ KULLANICI ID'NİZİ YAPIŞTIRIN
+        const ADMIN_UID = "ZVlZOQfBO7YS0OjzpnpS9lj4RFu1";
 
         //---------------------------------------------------
         // Firebase Yapılandırması ve Başlatma
@@ -74,7 +80,8 @@
         const getStatusClass = (status) => {
             switch (status) {
                 case 'Tamamlandı': case 'Teslim Edildi': case 'Onaylandı': return 'bg-green-100 text-green-800';
-                case 'Hazırlanıyor': case 'Yolda': case 'Gönderildi': return 'bg-yellow-100 text-yellow-800';
+                case 'Hazırlanıyor': case 'Yolda': return 'bg-yellow-100 text-yellow-800';
+                case 'Sevk Edildi': return 'bg-blue-100 text-blue-800';
                 case 'Bekliyor': case 'Reddedildi': return 'bg-red-100 text-red-800';
                 case 'İlgileniyor': case 'Teklif Bekliyor': return 'bg-blue-100 text-blue-800';
                 default: return 'bg-gray-100 text-gray-800';
@@ -348,7 +355,7 @@
             );
         };
 
-        const Musteriler = ({ customers, onSave, orders, teklifler, gorusmeler, shipments }) => {
+        const Musteriler = ({ customers, onSave, orders, teklifler, gorusmeler, shipments, isAdmin }) => {
             const [isListModalOpen, setIsListModalOpen] = useState(false);
             const [selectedCustomer, setSelectedCustomer] = useState(null);
 
@@ -372,6 +379,9 @@
                     shipments={shipments}
                 />
             }
+            
+            const adminColumns = isAdmin ? ['Kullanıcı ID'] : [];
+            const columns = ['Müşteri Adı', 'Yetkili Kişi', 'Telefon', 'E-posta', ...adminColumns, 'İşlemler'];
 
             return (
                 <div>
@@ -385,7 +395,7 @@
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b-2 border-gray-200">
                                 <tr>
-                                    {['Müşteri Adı', 'Yetkili Kişi', 'Telefon', 'E-posta', 'İşlemler'].map(head => 
+                                    {columns.map(head => 
                                         <th key={head} className="p-3 text-sm font-semibold tracking-wide text-left">{head}</th>
                                     )}
                                 </tr>
@@ -401,6 +411,7 @@
                                         <td className="p-3 text-sm text-gray-700">{customer.contact_person}</td>
                                         <td className="p-3 text-sm text-gray-700">{customer.phone}</td>
                                         <td className="p-3 text-sm text-gray-700">{customer.email}</td>
+                                        {isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '100px'}} title={customer.userId}>{customer.userId}</td>}
                                         <td className="p-3 text-sm text-gray-700">
                                             <button onClick={() => handleOpenModal(customer)} className="text-blue-500 hover:underline">Düzenle</button>
                                         </td>
@@ -416,7 +427,7 @@
             );
         };
 
-        const Urunler = ({ products, onSave }) => {
+        const Urunler = ({ products, onSave, isAdmin }) => {
             const [isModalOpen, setIsModalOpen] = useState(false); 
             const [currentProduct, setCurrentProduct] = useState(null); 
             const handleOpenModal = (product = null) => { setCurrentProduct(product); setIsModalOpen(true); }; 
@@ -443,6 +454,9 @@
                 ); 
             };
             
+            const adminColumns = isAdmin ? ['Kullanıcı ID'] : [];
+            const columns = ['Ürün Adı', 'Ürün Kodu', 'Maliyet Fiyatı', 'Satış Fiyatı', ...adminColumns, 'İşlemler'];
+            
             return (
                 <div>
                     <div className="flex justify-between items-center mb-6">
@@ -452,11 +466,7 @@
                     <div className="overflow-auto rounded-lg shadow bg-white">
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b-2 border-gray-200">
-                                <tr>
-                                    {['Ürün Adı', 'Ürün Kodu', 'Maliyet Fiyatı', 'Satış Fiyatı', 'İşlemler'].map(head => 
-                                        <th key={head} className="p-3 text-sm font-semibold tracking-wide text-left">{head}</th>
-                                    )}
-                                </tr>
+                                <tr>{columns.map(head => <th key={head} className="p-3 text-sm font-semibold tracking-wide text-left">{head}</th>)}</tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {products.map(product => (
@@ -465,6 +475,7 @@
                                         <td className="p-3 text-sm text-gray-700">{product.code}</td>
                                         <td className="p-3 text-sm text-gray-700">{formatCurrency(product.cost_price)}</td>
                                         <td className="p-3 text-sm text-gray-700">{formatCurrency(product.selling_price)}</td>
+                                        {isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '100px'}} title={product.userId}>{product.userId}</td>}
                                         <td className="p-3 text-sm text-gray-700"><button onClick={() => handleOpenModal(product)} className="text-blue-500 hover:underline">Düzenle</button></td>
                                     </tr>
                                 ))}
@@ -485,10 +496,53 @@
             return (<div className="space-y-4 p-4 border rounded-lg bg-gray-50"><h4 className="font-semibold text-gray-800">Ürünler</h4>{items.map((item, index) => (<div key={index} className="grid grid-cols-12 gap-3 items-center"><div className="col-span-5"><FormSelect value={item.productId} onChange={e => handleItemChange(index, 'productId', e.target.value)}>{products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</FormSelect></div><div className="col-span-2"><FormInput type="number" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', parseInt(e.target.value) || 1)} min="1" /></div><div className="col-span-2"><FormInput type="number" value={item.unit_price} onChange={e => handleItemChange(index, 'unit_price', parseFloat(e.target.value) || 0)} step="0.01" /></div><div className="col-span-2 text-sm text-gray-700 text-right font-medium">{formatCurrency((item.quantity || 0) * (item.unit_price || 0))}</div><div className="col-span-1"><button type="button" onClick={() => handleRemoveItem(index)} className="text-red-500 hover:text-red-700 p-1"><TrashIcon className="w-5 h-5"/></button></div></div>))} <button type="button" onClick={handleAddItem} className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-md hover:bg-blue-200">+ Ürün Ekle</button></div>);
         };
 
-        const Siparisler = ({ orders, onSave, customers, products }) => {
-            const [isModalOpen, setIsModalOpen] = useState(false); const [currentOrder, setCurrentOrder] = useState(null); const handleOpenModal = (order = null) => { setCurrentOrder(order); setIsModalOpen(true); };
+        const SevkiyatForm = ({ order, onSave, onCancel }) => {
+            const [formData, setFormData] = useState({ transporter: '', tracking_number: '' });
+            const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                onSave({ ...formData, orderId: order.id });
+            };
+
+            return (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <p className="text-sm text-gray-600">Sipariş ID: #{order.id}</p>
+                        <p className="font-semibold text-gray-800">{order.customerName}</p>
+                    </div>
+                    <FormInput label="Nakliye Firması" name="transporter" value={formData.transporter} onChange={handleChange} required />
+                    <FormInput label="Takip Numarası" name="tracking_number" value={formData.tracking_number} onChange={handleChange} />
+                    <div className="flex justify-end gap-3 pt-4 border-t">
+                        <button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">İptal</button>
+                        <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Sevkiyatı Oluştur</button>
+                    </div>
+                </form>
+            );
+        };
+
+        const Siparisler = ({ orders, onSave, customers, products, onShipmentCreate, isAdmin }) => {
+            const [isModalOpen, setIsModalOpen] = useState(false); 
+            const [currentOrder, setCurrentOrder] = useState(null); 
+            const [isShipmentModalOpen, setIsShipmentModalOpen] = useState(false);
+            const [orderToShip, setOrderToShip] = useState(null);
+
+            const handleOpenModal = (order = null) => { setCurrentOrder(order); setIsModalOpen(true); };
             const handleSave = (orderData) => { onSave(orderData); setIsModalOpen(false); };
-            const OrderForm = ({ order, onSave, onCancel }) => { const [formData, setFormData] = useState(order || { customerId: customers[0]?.id || '', items: [], vatRate: 20 }); const [items, setItems] = useState(order?.items || []); 
+            
+            const handleOpenShipmentModal = (order) => {
+                const customer = customers.find(c => c.id === order.customerId);
+                setOrderToShip({ ...order, customerName: customer?.name || 'Bilinmeyen Müşteri' });
+                setIsShipmentModalOpen(true);
+            };
+
+            const handleCreateShipment = (shipmentData) => {
+                onShipmentCreate(shipmentData);
+                setIsShipmentModalOpen(false);
+            };
+
+            const OrderForm = ({ order, onSave, onCancel }) => { 
+                const [formData, setFormData] = useState(order || { customerId: customers[0]?.id || '', items: [], vatRate: 20 }); 
+                const [items, setItems] = useState(order?.items || []); 
                 const subtotal = items.reduce((sum, item) => sum + ((item.quantity || 0) * (item.unit_price || 0)), 0);
                 const vatAmount = subtotal * (formData.vatRate / 100);
                 const total = subtotal + vatAmount;
@@ -508,11 +562,48 @@
                             <div className="flex justify-between text-lg font-bold"><span className="text-gray-800">Genel Toplam:</span><span className="text-blue-600">{formatCurrency(total)}</span></div>
                         </div>
                     </div>
-                    <div className="flex justify-end gap-3 pt-4 border-t"><button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">İptal</button><button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Siparişi Kaydet</button></div></form>); };
-            return (<div><div className="flex justify-between items-center mb-6"><h1 className="text-3xl font-bold text-gray-800">Sipariş Yönetimi</h1><button onClick={() => handleOpenModal()} className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"><PlusIcon/>Yeni Sipariş</button></div><div className="overflow-auto rounded-lg shadow bg-white"><table className="w-full"><thead className="bg-gray-50 border-b-2 border-gray-200"><tr>{['Müşteri', 'Sipariş Tarihi', 'Toplam Tutar', 'Durum', 'İşlemler'].map(h => <th key={h} className="p-3 text-sm font-semibold tracking-wide text-left">{h}</th>)}</tr></thead><tbody className="divide-y divide-gray-100">{orders.map(order => (<tr key={order.id} className="hover:bg-gray-50"><td className="p-3 text-sm text-gray-700 font-bold">{customers.find(c => c.id === order.customerId)?.name || 'Bilinmiyor'}</td><td className="p-3 text-sm text-gray-700">{formatDate(order.order_date)}</td><td className="p-3 text-sm text-gray-700">{formatCurrency(order.total_amount)}</td><td className="p-3 text-sm"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(order.status)}`}>{order.status}</span></td><td className="p-3 text-sm"><button onClick={() => handleOpenModal(order)} className="text-blue-500 hover:underline">Detay/Düzenle</button></td></tr>))}</tbody></table></div><Modal show={isModalOpen} onClose={() => setIsModalOpen(false)} title={currentOrder ? 'Sipariş Detayı' : 'Yeni Sipariş Oluştur'}><OrderForm order={currentOrder} onSave={handleSave} onCancel={() => setIsModalOpen(false)} /></Modal></div>);
+                    <div className="flex justify-end gap-3 pt-4 border-t"><button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">İptal</button><button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Siparişi Kaydet</button></div></form>); 
+            };
+            
+            const adminColumns = isAdmin ? ['Kullanıcı ID'] : [];
+            const columns = ['Müşteri', 'Sipariş Tarihi', 'Toplam Tutar', 'Durum', ...adminColumns, 'İşlemler'];
+
+            return (
+                <div>
+                    <div className="flex justify-between items-center mb-6"><h1 className="text-3xl font-bold text-gray-800">Sipariş Yönetimi</h1><button onClick={() => handleOpenModal()} className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"><PlusIcon/>Yeni Sipariş</button></div>
+                    <div className="overflow-auto rounded-lg shadow bg-white">
+                        <table className="w-full">
+                            <thead className="bg-gray-50 border-b-2 border-gray-200"><tr>{columns.map(h => <th key={h} className="p-3 text-sm font-semibold tracking-wide text-left">{h}</th>)}</tr></thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {orders.map(order => (
+                                    <tr key={order.id} className="hover:bg-gray-50">
+                                        <td className="p-3 text-sm text-gray-700 font-bold">{customers.find(c => c.id === order.customerId)?.name || 'Bilinmiyor'}</td>
+                                        <td className="p-3 text-sm text-gray-700">{formatDate(order.order_date)}</td>
+                                        <td className="p-3 text-sm text-gray-700">{formatCurrency(order.total_amount)}</td>
+                                        <td className="p-3 text-sm"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(order.status)}`}>{order.status}</span></td>
+                                        {isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '100px'}} title={order.userId}>{order.userId}</td>}
+                                        <td className="p-3 text-sm space-x-3">
+                                            <button onClick={() => handleOpenModal(order)} className="text-blue-500 hover:underline">Detay</button>
+                                            {['Bekliyor', 'Hazırlanıyor'].includes(order.status) && (
+                                                <button onClick={() => handleOpenShipmentModal(order)} className="text-green-500 hover:underline">Sevk Et</button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <Modal show={isModalOpen} onClose={() => setIsModalOpen(false)} title={currentOrder ? 'Sipariş Detayı' : 'Yeni Sipariş Oluştur'}><OrderForm order={currentOrder} onSave={handleSave} onCancel={() => setIsModalOpen(false)} /></Modal>
+                    {orderToShip && (
+                        <Modal show={isShipmentModalOpen} onClose={() => setIsShipmentModalOpen(false)} title="Sevkiyat Oluştur">
+                            <SevkiyatForm order={orderToShip} onSave={handleCreateShipment} onCancel={() => setIsShipmentModalOpen(false)} />
+                        </Modal>
+                    )}
+                </div>
+            );
         };
 
-        const Teklifler = ({ teklifler, onSave, onConvertToOrder, customers, products }) => {
+        const Teklifler = ({ teklifler, onSave, onConvertToOrder, customers, products, isAdmin }) => {
             const [isModalOpen, setIsModalOpen] = useState(false); const [currentTeklif, setCurrentTeklif] = useState(null); const handleOpenModal = (teklif = null) => { setCurrentTeklif(teklif); setIsModalOpen(true); };
             const handleSave = (teklifData) => { onSave(teklifData); setIsModalOpen(false); };
             const TeklifForm = ({ teklif, onSave, onCancel }) => { 
@@ -551,12 +642,20 @@
                     </form>
                 ); 
             };
-            return (<div><div className="flex justify-between items-center mb-6"><h1 className="text-3xl font-bold text-gray-800">Teklif Yönetimi</h1><button onClick={() => handleOpenModal()} className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"><PlusIcon/>Yeni Teklif</button></div><div className="overflow-auto rounded-lg shadow bg-white"><table className="w-full"><thead className="bg-gray-50 border-b-2 border-gray-200"><tr>{['Müşteri', 'Teklif Tarihi', 'Geçerlilik Tarihi', 'Tutar', 'Durum', 'İşlemler'].map(h => <th key={h} className="p-3 text-sm font-semibold tracking-wide text-left">{h}</th>)}</tr></thead><tbody className="divide-y divide-gray-100">{teklifler.map(teklif => (<tr key={teklif.id} className="hover:bg-gray-50"><td className="p-3 text-sm text-gray-700 font-bold">{customers.find(c => c.id === teklif.customerId)?.name || 'Bilinmiyor'}</td><td className="p-3 text-sm text-gray-700">{formatDate(teklif.teklif_tarihi)}</td><td className="p-3 text-sm text-gray-700">{formatDate(teklif.gecerlilik_tarihi)}</td><td className="p-3 text-sm text-gray-700">{formatCurrency(teklif.total_amount)}</td><td className="p-3 text-sm"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(teklif.status)}`}>{teklif.status}</span></td><td className="p-3 text-sm space-x-2"><button onClick={() => handleOpenModal(teklif)} className="text-blue-500 hover:underline">Detay</button>{teklif.status !== 'Onaylandı' && <button onClick={() => onConvertToOrder(teklif)} className="text-green-500 hover:underline">Siparişe Çevir</button>}</td></tr>))}</tbody></table></div><Modal show={isModalOpen} onClose={() => setIsModalOpen(false)} title={currentTeklif ? 'Teklif Detayı' : 'Yeni Teklif Oluştur'}><TeklifForm teklif={currentTeklif} onSave={handleSave} onCancel={() => setIsModalOpen(false)} /></Modal></div>);
+            
+            const adminColumns = isAdmin ? ['Kullanıcı ID'] : [];
+            const columns = ['Müşteri', 'Teklif Tarihi', 'Geçerlilik Tarihi', 'Tutar', 'Durum', ...adminColumns, 'İşlemler'];
+            
+            return (<div><div className="flex justify-between items-center mb-6"><h1 className="text-3xl font-bold text-gray-800">Teklif Yönetimi</h1><button onClick={() => handleOpenModal()} className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"><PlusIcon/>Yeni Teklif</button></div><div className="overflow-auto rounded-lg shadow bg-white"><table className="w-full"><thead className="bg-gray-50 border-b-2 border-gray-200"><tr>{columns.map(h => <th key={h} className="p-3 text-sm font-semibold tracking-wide text-left">{h}</th>)}</tr></thead><tbody className="divide-y divide-gray-100">{teklifler.map(teklif => (<tr key={teklif.id} className="hover:bg-gray-50"><td className="p-3 text-sm text-gray-700 font-bold">{customers.find(c => c.id === teklif.customerId)?.name || 'Bilinmiyor'}</td><td className="p-3 text-sm text-gray-700">{formatDate(teklif.teklif_tarihi)}</td><td className="p-3 text-sm text-gray-700">{formatDate(teklif.gecerlilik_tarihi)}</td><td className="p-3 text-sm text-gray-700">{formatCurrency(teklif.total_amount)}</td><td className="p-3 text-sm"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(teklif.status)}`}>{teklif.status}</span></td>{isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '100px'}} title={teklif.userId}>{teklif.userId}</td>}<td className="p-3 text-sm space-x-2"><button onClick={() => handleOpenModal(teklif)} className="text-blue-500 hover:underline">Detay</button>{teklif.status !== 'Onaylandı' && <button onClick={() => onConvertToOrder(teklif)} className="text-green-500 hover:underline">Siparişe Çevir</button>}</td></tr>))}</tbody></table></div><Modal show={isModalOpen} onClose={() => setIsModalOpen(false)} title={currentTeklif ? 'Teklif Detayı' : 'Yeni Teklif Oluştur'}><TeklifForm teklif={currentTeklif} onSave={handleSave} onCancel={() => setIsModalOpen(false)} /></Modal></div>);
         };
 
-        const Sevkiyat = ({ shipments, onDelivery }) => {
+        const Sevkiyat = ({ shipments, onDelivery, isAdmin }) => {
             const handleDelivery = (shipmentId) => { onDelivery(shipmentId); };
-            return (<div><h1 className="text-3xl font-bold text-gray-800 mb-6">Sevkiyat Yönetimi</h1><div className="overflow-auto rounded-lg shadow bg-white"><table className="w-full"><thead className="bg-gray-50 border-b-2 border-gray-200"><tr>{['Sipariş ID', 'Sevk Tarihi', 'Nakliye Firması', 'Takip No', 'Teslim Tarihi', 'Durum', 'İşlem'].map(head => <th key={head} className="p-3 text-sm font-semibold tracking-wide text-left">{head}</th>)}</tr></thead><tbody className="divide-y divide-gray-100">{shipments.map(shipment => (<tr key={shipment.id} className="hover:bg-gray-50"><td className="p-3 text-sm text-gray-700">#{shipment.orderId}</td><td className="p-3 text-sm text-gray-700">{formatDate(shipment.shipment_date)}</td><td className="p-3 text-sm text-gray-700">{shipment.transporter}</td><td className="p-3 text-sm text-gray-700">{shipment.tracking_number}</td><td className="p-3 text-sm text-gray-700">{formatDate(shipment.delivery_date)}</td><td className="p-3 text-sm"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(shipment.status)}`}>{shipment.status}</span></td><td className="p-3 text-sm">{shipment.status !== 'Teslim Edildi' && (<button onClick={() => handleDelivery(shipment.id)} className="bg-green-500 text-white px-3 py-1 text-xs rounded-md hover:bg-green-600">Teslim Edildi</button>)}</td></tr>))}</tbody></table></div></div>);
+            
+            const adminColumns = isAdmin ? ['Kullanıcı ID'] : [];
+            const columns = ['Sipariş ID', 'Sevk Tarihi', 'Nakliye Firması', 'Takip No', 'Teslim Tarihi', 'Durum', ...adminColumns, 'İşlem'];
+
+            return (<div><h1 className="text-3xl font-bold text-gray-800 mb-6">Sevkiyat Yönetimi</h1><div className="overflow-auto rounded-lg shadow bg-white"><table className="w-full"><thead className="bg-gray-50 border-b-2 border-gray-200"><tr>{columns.map(head => <th key={head} className="p-3 text-sm font-semibold tracking-wide text-left">{head}</th>)}</tr></thead><tbody className="divide-y divide-gray-100">{shipments.map(shipment => (<tr key={shipment.id} className="hover:bg-gray-50"><td className="p-3 text-sm text-gray-700">#{shipment.orderId}</td><td className="p-3 text-sm text-gray-700">{formatDate(shipment.shipment_date)}</td><td className="p-3 text-sm text-gray-700">{shipment.transporter}</td><td className="p-3 text-sm text-gray-700">{shipment.tracking_number}</td><td className="p-3 text-sm text-gray-700">{formatDate(shipment.delivery_date)}</td><td className="p-3 text-sm"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(shipment.status)}`}>{shipment.status}</span></td>{isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '100px'}} title={shipment.userId}>{shipment.userId}</td>}<td className="p-3 text-sm">{shipment.status !== 'Teslim Edildi' && (<button onClick={() => handleDelivery(shipment.id)} className="bg-green-500 text-white px-3 py-1 text-xs rounded-md hover:bg-green-600">Teslim Edildi</button>)}</td></tr>))}</tbody></table></div></div>);
         };
 
         const GorusmeForm = ({ gorusme, onSave, onCancel, customers, onCustomerSave }) => {
@@ -626,11 +725,14 @@
             );
         };
 
-        const Gorusmeler = ({ gorusmeler, customers, onSave, onCustomerSave }) => {
+        const Gorusmeler = ({ gorusmeler, customers, onSave, onCustomerSave, isAdmin }) => {
             const [isModalOpen, setIsModalOpen] = useState(false);
             const [currentGorusme, setCurrentGorusme] = useState(null);
             const handleOpenModal = (gorusme = null) => { setCurrentGorusme(gorusme); setIsModalOpen(true); };
             const handleSave = (gorusmeData) => { onSave(gorusmeData); setIsModalOpen(false); };
+            
+            const adminColumns = isAdmin ? ['Kullanıcı ID'] : [];
+            const columns = ['Müşteri', 'Görüşme Tarihi', 'Sonuç', 'Sonraki Eylem', 'Eylem Tarihi', ...adminColumns, 'İşlemler'];
 
             return (
                 <div>
@@ -643,11 +745,7 @@
                     <div className="overflow-auto rounded-lg shadow bg-white">
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b-2 border-gray-200">
-                                <tr>
-                                    {['Müşteri', 'Görüşme Tarihi', 'Sonuç', 'Sonraki Eylem', 'Eylem Tarihi', 'İşlemler'].map(head => 
-                                        <th key={head} className="p-3 text-sm font-semibold tracking-wide text-left">{head}</th>
-                                    )}
-                                </tr>
+                                <tr>{columns.map(head => <th key={head} className="p-3 text-sm font-semibold tracking-wide text-left">{head}</th>)}</tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {gorusmeler.map(gorusme => (
@@ -657,6 +755,7 @@
                                         <td className="p-3 text-sm"><span className={`p-1.5 text-xs font-medium uppercase tracking-wider rounded-lg ${getStatusClass(gorusme.outcome)}`}>{gorusme.outcome}</span></td>
                                         <td className="p-3 text-sm text-gray-700">{gorusme.next_action_notes}</td>
                                         <td className="p-3 text-sm text-gray-700">{formatDate(gorusme.next_action_date)}</td>
+                                        {isAdmin && <td className="p-3 text-xs text-gray-500 truncate" style={{maxWidth: '100px'}} title={gorusme.userId}>{gorusme.userId}</td>}
                                         <td className="p-3 text-sm text-gray-700"><button onClick={() => handleOpenModal(gorusme)} className="text-blue-500 hover:underline">Düzenle</button></td>
                                     </tr>
                                 ))}
@@ -681,6 +780,7 @@
         //---------------------------------------------------
         function CrmApp() {
             const [user, setUser] = useState(null);
+            const [isAdmin, setIsAdmin] = useState(false);
             const [loading, setLoading] = useState(true);
             const [connectionStatus, setConnectionStatus] = useState('Bağlanılıyor...');
             
@@ -697,6 +797,7 @@
             useEffect(() => {
                 const unsubscribe = auth.onAuthStateChanged((currentUser) => {
                     setUser(currentUser);
+                    setIsAdmin(currentUser ? currentUser.uid === ADMIN_UID : false);
                     setLoading(false);
                 });
                 return () => unsubscribe();
@@ -705,13 +806,8 @@
             // Veri Çekme
             useEffect(() => {
                 if (!user) {
-                    // Kullanıcı yoksa, veri listelerini temizle
-                    setCustomers([]);
-                    setProducts([]);
-                    setOrders([]);
-                    setShipments([]);
-                    setTeklifler([]);
-                    setGorusmeler([]);
+                    setCustomers([]); setProducts([]); setOrders([]);
+                    setShipments([]); setTeklifler([]); setGorusmeler([]);
                     setConnectionStatus('Bağlantı Bekleniyor');
                     return;
                 }
@@ -720,37 +816,35 @@
                     console.error("Veritabanı bağlantı hatası: ", error);
                     setConnectionStatus('Bağlantı Hatası');
                 };
+                
+                const collections = ['customers', 'products', 'orders', 'shipments', 'teklifler', 'gorusmeler'];
+                const stateSetters = { customers: setCustomers, products: setProducts, orders: setOrders, shipments: setShipments, teklifler: setTeklifler, gorusmeler: setGorusmeler };
+                
+                let unsubscribers;
 
-                const userSpecificPath = (collectionName) => `users/${user.uid}/${collectionName}`;
-
-                const collectionsToSync = {
-                    customers: db.collection(userSpecificPath('customers')),
-                    products: db.collection(userSpecificPath('products')),
-                    orders: db.collection(userSpecificPath('orders')),
-                    shipments: db.collection(userSpecificPath('shipments')),
-                    teklifler: db.collection(userSpecificPath('teklifler')),
-                    gorusmeler: db.collection(userSpecificPath('gorusmeler')),
-                };
-
-                const unsubscribers = Object.keys(collectionsToSync).map(key => {
-                    const stateSetter = {
-                        customers: setCustomers,
-                        products: setProducts,
-                        orders: setOrders,
-                        shipments: setShipments,
-                        teklifler: setTeklifler,
-                        gorusmeler: setGorusmeler,
-                    }[key];
-                    return collectionsToSync[key].onSnapshot( 
-                        snapshot => stateSetter(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))), 
-                        handleSnapshotError
+                if (isAdmin) {
+                    // Admin: Tüm kullanıcıların verilerini Collection Groups ile çek
+                    unsubscribers = collections.map(col => 
+                        db.collectionGroup(col).onSnapshot(
+                            snapshot => stateSetters[col](snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, userId: doc.ref.parent.parent.id }))),
+                            handleSnapshotError
+                        )
                     );
-                });
+                } else {
+                    // Normal Kullanıcı: Sadece kendi verilerini çek
+                    const userSpecificPath = (collectionName) => `users/${user.uid}/${collectionName}`;
+                    unsubscribers = collections.map(col => 
+                        db.collection(userSpecificPath(col)).onSnapshot(
+                            snapshot => stateSetters[col](snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))),
+                            handleSnapshotError
+                        )
+                    );
+                }
                 
                 setConnectionStatus('Bağlandı');
                 return () => unsubscribers.forEach(unsub => unsub());
 
-            }, [user]);
+            }, [user, isAdmin]);
 
             // Veri Kaydetme/Güncelleme Fonksiyonları
             const handleGenericSave = (collectionName) => async (data) => {
@@ -775,6 +869,20 @@
                 if (!finalData.status) finalData.status = 'Bekliyor';
                 if (!finalData.order_date) finalData.order_date = new Date().toISOString().slice(0, 10);
                 await handleGenericSave('orders')(finalData);
+            };
+            
+            const handleCreateShipment = async (shipmentData) => {
+              if (!user) return;
+              const newShipment = {
+                orderId: shipmentData.orderId,
+                transporter: shipmentData.transporter,
+                tracking_number: shipmentData.tracking_number,
+                shipment_date: new Date().toISOString().slice(0, 10),
+                status: 'Yolda', 
+                delivery_date: null,
+              };
+              await db.collection(`users/${user.uid}/shipments`).add(newShipment);
+              await db.collection(`users/${user.uid}/orders`).doc(shipmentData.orderId).update({ status: 'Sevk Edildi' });
             };
 
             const handleTeklifSave = async (data) => {
@@ -803,13 +911,13 @@
 
             const handleDelivery = async (shipmentId) => {
                 if (!user) return;
-                const shipmentRef = db.collection(`users/${user.uid}/shipments`).doc(shipmentId);
                 const shipment = shipments.find(s => s.id === shipmentId);
-                if(shipment) {
-                    await shipmentRef.update({ status: 'Teslim Edildi', delivery_date: new Date().toISOString().slice(0, 10) });
-                    const orderRef = db.collection(`users/${user.uid}/orders`).doc(shipment.orderId);
-                    await orderRef.update({ status: 'Tamamlandı' });
-                }
+                if (!shipment) return;
+                const shipmentRef = db.collection(`users/${shipment.userId}/shipments`).doc(shipmentId);
+                
+                await shipmentRef.update({ status: 'Teslim Edildi', delivery_date: new Date().toISOString().slice(0, 10) });
+                const orderRef = db.collection(`users/${shipment.userId}/orders`).doc(shipment.orderId);
+                await orderRef.update({ status: 'Tamamlandı' });
             };
 
             const handleLogout = async () => {
@@ -837,12 +945,12 @@
             const renderPage = () => {
                 switch (activePage) {
                     case 'Anasayfa': return <Anasayfa customers={customers} orders={orders} shipments={shipments} teklifler={teklifler} gorusmeler={gorusmeler} />;
-                    case 'Müşteriler': return <Musteriler customers={customers} onSave={handleGenericSave('customers')} orders={orders} teklifler={teklifler} gorusmeler={gorusmeler} shipments={shipments} />;
-                    case 'Ürünler': return <Urunler products={products} onSave={handleGenericSave('products')} />;
-                    case 'Teklifler': return <Teklifler teklifler={teklifler} onSave={handleTeklifSave} onConvertToOrder={handleConvertToOrder} customers={customers} products={products} />;
-                    case 'Siparişler': return <Siparisler orders={orders} onSave={handleOrderSave} customers={customers} products={products} />;
-                    case 'Görüşmeler': return <Gorusmeler gorusmeler={gorusmeler} customers={customers} onSave={handleGenericSave('gorusmeler')} onCustomerSave={handleGenericSave('customers')} />;
-                    case 'Sevkiyat': return <Sevkiyat shipments={shipments} onDelivery={handleDelivery} />;
+                    case 'Müşteriler': return <Musteriler customers={customers} onSave={handleGenericSave('customers')} orders={orders} teklifler={teklifler} gorusmeler={gorusmeler} shipments={shipments} isAdmin={isAdmin} />;
+                    case 'Ürünler': return <Urunler products={products} onSave={handleGenericSave('products')} isAdmin={isAdmin} />;
+                    case 'Teklifler': return <Teklifler teklifler={teklifler} onSave={handleTeklifSave} onConvertToOrder={handleConvertToOrder} customers={customers} products={products} isAdmin={isAdmin} />;
+                    case 'Siparişler': return <Siparisler orders={orders} onSave={handleOrderSave} customers={customers} products={products} onShipmentCreate={handleCreateShipment} isAdmin={isAdmin} />;
+                    case 'Görüşmeler': return <Gorusmeler gorusmeler={gorusmeler} customers={customers} onSave={handleGenericSave('gorusmeler')} onCustomerSave={handleGenericSave('customers')} isAdmin={isAdmin} />;
+                    case 'Sevkiyat': return <Sevkiyat shipments={shipments} onDelivery={handleDelivery} isAdmin={isAdmin} />;
                     default: return <Anasayfa />;
                 }
             };
